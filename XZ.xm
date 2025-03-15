@@ -1,6 +1,6 @@
 /*自行扩展功能 本人仅做一个简单的框架与部分功能*/
 
-#import "Tweak.h"
+#import "XZ.h"
 
 UIViewController *topView(void) {
     UIWindow *window;
