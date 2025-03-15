@@ -351,7 +351,10 @@ static void *kViewModelKey = &kViewModelKey;
         @{@"identifier": @"DYYYDoubleClickedComment", @"title": @"双击打开评论区", @"detail": @"", @"cellType": @6, @"imageName": @"ic_star_outlined_12"},
         @{@"identifier": @"DYYYLongPressDownload", @"title": @"长按下载", @"detail": @"", @"cellType": @6, @"imageName": @"ic_star_outlined_12"},
 
-        @{@"identifier": @"DYYYCommentLivePhotoNotWaterMark", @"title": @"评论区实况图无水印", @"detail": @"", @"cellType": @37, @"imageName": @"ic_star_outlined_12"}
+        @{@"identifier": @"DYYYCommentLivePhotoNotWaterMark", @"title": @"评论区实况图无水印", @"detail": @"", @"cellType": @6, @"imageName": @"ic_star_outlined_12"},
+
+@{@"identifier": @"DYYYCopyText", @"title": @"长按复制文案", @"detail": @"", @"cellType": @6, @"imageName": @"ic_star_outlined_12"}
+
     ];
     return [self createItemsFromArray:enhanceSettings svgIcon:YES];
 }
@@ -384,7 +387,7 @@ static void *kViewModelKey = &kViewModelKey;
                     AWESettingsViewModel *viewModel = [[%c(AWESettingsViewModel) alloc] init];
                     viewModel.colorStyle = 0;
                     NSArray *sections = @[
-                        [self createSectionWithTitle:@"用于调整抖音UI的Tweak\n仅在33.4.0+版本中测试\n仅供学习交流\n\n最终版本v2.0-9\n2025-03-13" items:[self createTestItems]]
+                        [self createSectionWithTitle:@"用于调整抖音UI的Tweak\n仅在33.4.0+版本中测试\n仅供学习交流\n\n当前插件版本 2.1-1" items:[self createTestItems]]
                     ];
                     viewModel.sectionDataArray = sections;
                     objc_setAssociatedObject(openSourceVC, kViewModelKey, viewModel, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
