@@ -209,6 +209,7 @@ static void *kViewModelKey = &kViewModelKey;
 
         newItem.cellTappedBlock = ^{
             UIViewController *rootViewController = self.controllerDelegate;
+
             AWESettingBaseViewController *settingsVC = [[%c(AWESettingBaseViewController) alloc] init];
             AWENavigationBar *navigationBar = [self findNavigationBarInView:settingsVC.view];
 
@@ -217,9 +218,11 @@ static void *kViewModelKey = &kViewModelKey;
             }
 
             AWESettingsViewModel *viewModel = [[%c(AWESettingsViewModel) alloc] init];
+
             viewModel.colorStyle = 0;
 
             NSArray *sections = @[
+
                 [self createSectionWithTitle:@"基本设置" items:[self createBasicSettingsItems]],
                 [self createSectionWithTitle:@"界面设置" items:[self createUISettingsItems]],
                 [self createSectionWithTitle:@"隐藏设置" items:[self createHideSettingsItems]],
@@ -321,7 +324,8 @@ static void *kViewModelKey = &kViewModelKey;
         @{@"identifier": @"DYYYHideMyPage", @"title": @"隐藏我的页面", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xmark_outlined_16"},
         @{@"identifier": @"DYYYHideInteractionSearch", @"title": @"隐藏相关搜索", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xmark_outlined_16"},
         @{@"identifier": @"DYYYHideQuqishuiting", @"title": @"隐藏去汽水听", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xmark_outlined_16"},
-        @{@"identifier": @"DYYYHideHotspot", @"title": @"隐藏热点提示", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xmark_outlined_16"}
+        @{@"identifier": @"DYYYHideHotspot", @"title": @"隐藏热点提示", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xmark_outlined_16"},
+@{@"identifier": @"DYYYisHiddenzb", @"title": @"隐藏关注页直播数量", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xmark_outlined_16"}
     ];
     return [self createItemsFromArray:hideSettings svgIcon:YES];
 }
@@ -346,6 +350,7 @@ static void *kViewModelKey = &kViewModelKey;
         @{@"identifier": @"DYYYDoubleClickedDownload", @"title": @"双击下载", @"detail": @"", @"cellType": @6, @"imageName": @"ic_star_outlined_12"},
         @{@"identifier": @"DYYYDoubleClickedComment", @"title": @"双击打开评论区", @"detail": @"", @"cellType": @6, @"imageName": @"ic_star_outlined_12"},
         @{@"identifier": @"DYYYLongPressDownload", @"title": @"长按下载", @"detail": @"", @"cellType": @6, @"imageName": @"ic_star_outlined_12"},
+
         @{@"identifier": @"DYYYCommentLivePhotoNotWaterMark", @"title": @"评论区实况图无水印", @"detail": @"", @"cellType": @37, @"imageName": @"ic_star_outlined_12"}
     ];
     return [self createItemsFromArray:enhanceSettings svgIcon:YES];
@@ -384,16 +389,24 @@ static void *kViewModelKey = &kViewModelKey;
                     viewModel.sectionDataArray = sections;
                     objc_setAssociatedObject(openSourceVC, kViewModelKey, viewModel, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
                     [rootViewController.navigationController pushViewController:openSourceVC animated:YES];
+
                 } else if ([item.identifier isEqualToString:@"DYYYTestCell"]) {
                     NSURL *url = [NSURL URLWithString:@"https://github.com/huami1314/DYYY"];
                     [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+
                 } else if ([item.identifier isEqualToString:@"DYYYTestCell2"]) {
                     showToast(@"😁");
-                } else if ([item.identifier isEqualToString:@"DYYYTestTelegram"]) {
+
+} else if ([item.identifier isEqualToString:@"DYYYgiri"]) {
                     NSURL *url = [NSURL URLWithString:@"https://t.me/She_doesnt_understand"];
                     [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+
+                } else if ([item.identifier isEqualToString:@"DYYYTestTelegram"]) {
+                    NSURL *url = [NSURL URLWithString:@"https://t.me/huamichat"];
+                    [[UIApplication sharedApplication] openURL:url options:@{} completionHandler:nil];
+
                 } else {
-                    showTextInputAlert(item.title, ^(id text) {
+                   showTextInputAlert(item.title, ^(id text) {
                         setUserDefaults(text, item.identifier);
                         [item setDetail:text];
                         [item refreshCell];
@@ -418,9 +431,13 @@ static void *kViewModelKey = &kViewModelKey;
 
 %new - (NSArray<AWESettingItemModel *> *)createTestItems {
     NSArray *openSourceSettings = @[
-        @{@"identifier": @"DYYYTestCell", @"title": @"开源地址", @"detail": @"🎉", @"cellType": @26, @"imageName": @"ic_arrowright_filled_16"},
-        @{@"identifier": @"DYYYTestCell2", @"title": @"打钱地址", @"detail": @"💰", @"cellType": @26, @"imageName": @"ic_handshake_filled"},
-        @{@"identifier": @"DYYYTestTelegram", @"title": @"@She_doesnt_understand", @"detail": @"", @"cellType": @26, @"imageName": @"ic_airplane_filled"}
+
+        @{@"identifier": @"DYYYTestCell", @"title": @"DYYY开源地址", @"detail": @"", @"cellType": @26, @"imageName": @"ic_arrowright_filled_16"},
+
+        @{@"identifier": @"DYYYTestTelegram", @"title": @"前往 Telegram频道", @"detail": @"", @"cellType": @26, @"imageName": @"ic_airplane_filled"},
+
+@{@"identifier": @"DYYYgiri", @"title": @"新框架:giri 2023", @"detail": @"", @"cellType": @26, @"imageName": @"ic_airplane_filled"}
+
     ];
     return [self createItemsFromArray:openSourceSettings svgIcon:YES];
 }
@@ -455,7 +472,7 @@ static void *kViewModelKey = &kViewModelKey;
     int allImages = 0;
 
     if (aweType == 68) {
-        typeStr = @"下载图片";
+        typeStr = @"下载当前图片";
         allImages = 1;
     }
 
@@ -512,6 +529,7 @@ static void *kViewModelKey = &kViewModelKey;
 
 - (NSArray *)dataArray {
     NSArray *originalArray = %orig;
+
     if (!getUserDefaults(@"DYYYLongPressDownload")) return originalArray;
 
     AWELongPressPanelViewGroupModel *newGroupModel = [[%c(AWELongPressPanelViewGroupModel) alloc] init];
@@ -526,7 +544,7 @@ static void *kViewModelKey = &kViewModelKey;
     NSArray *customButtons = @[@"下载视频", @"下载音频", @"下载封面"];
     NSArray *customIcons = @[@"ic_star_outlined_12", @"ic_star_outlined_12", @"ic_star_outlined_12", @"ic_star_outlined_12"];
     if (awemeModel.awemeType == 68) {
-        customButtons = @[@"下载图片", @"下载全部图片", @"下载音频", @"下载封面"];
+        customButtons = @[@"下载当前图片", @"下载全部图片", @"下载音频", @"下载封面"];
     }
 
     NSMutableArray *viewModels = [NSMutableArray arrayWithCapacity:customButtons.count];
@@ -581,24 +599,6 @@ static void *kViewModelKey = &kViewModelKey;
 
     newGroupModel.groupArr = viewModels;
     return [@[newGroupModel] arrayByAddingObjectsFromArray:originalArray ?: @[]];
-}
-
-%end
-
-%hook AWECommentMediaDownloadConfigLivePhoto
-
-bool commentLivePhotoNotWaterMark = getUserDefaults(@"DYYYCommentLivePhotoNotWaterMark");
-
-- (bool)needClientWaterMark {
-    return commentLivePhotoNotWaterMark ? 0 : %orig;
-}
-
-- (bool)needClientEndWaterMark {
-    return commentLivePhotoNotWaterMark ? 0 : %orig;
-}
-
-- (id)watermarkConfig {
-    return commentLivePhotoNotWaterMark ? nil : %orig;
 }
 
 %end
