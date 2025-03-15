@@ -439,7 +439,7 @@ static void *kViewModelKey = &kViewModelKey;
 
         @{@"identifier": @"DYYYTestTelegram", @"title": @"前往 Telegram频道", @"detail": @"", @"cellType": @26, @"imageName": @"ic_airplane_filled"},
 
-@{@"identifier": @"DYYYgiri", @"title": @"新框架:giri 2023", @"detail": @"", @"cellType": @26, @"imageName": @"ic_airplane_filled"}
+@{@"identifier": @"DYYYgiri", @"title": @"新框架:2023 giri", @"detail": @"", @"cellType": @26, @"imageName": @"ic_airplane_filled"}
 
     ];
     return [self createItemsFromArray:openSourceSettings svgIcon:YES];
