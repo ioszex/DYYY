@@ -663,3 +663,10 @@ static void *kViewModelKey = &kViewModelKey;
 }
 
 %end
+
+%ctor {
+    %init(DYYYSettingsGesture);
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"]) {
+        %init;
+    }
+}
