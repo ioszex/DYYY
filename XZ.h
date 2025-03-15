@@ -28,7 +28,7 @@ extern void downloadAllImages(NSArray<NSString *> *imageURLs);
 #endif
 
 #define DYYY @"DYYY"
-#define tweakVersion @"2.0-9"
+#define tweakVersion @"2.1-1"
 
 @interface AWEURLModel : NSObject
 @property (copy, nonatomic) NSArray* originURLList;
