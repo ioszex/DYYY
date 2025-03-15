@@ -10,6 +10,47 @@
 #import "CityManager.h"
 #import "AwemeHeaders.h"
 
+%hook AWEConcernSkylightCapsuleView
+
+- (void)setHidden:(BOOL)hidden {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisHiddenzb"]) {
+        hidden = YES;
+    }
+
+    %orig(hidden);
+}
+%end
+
+static UIWindow * getActiveWindow(void) {
+    if (@available(iOS 15.0, *)) {
+        for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
+                for (UIWindow *w in ((UIWindowScene *)scene).windows) {
+                    if (w.isKeyWindow) return w;
+                }
+            }
+        }
+        return nil;
+    } else {
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wdeprecated-declarations"
+        return [UIApplication sharedApplication].windows.firstObject;
+        #pragma clang diagnostic pop
+    }
+}
+
+static UIViewController * getActiveTopController(void) {
+    UIWindow *window = getActiveWindow();
+    if (!window) return nil;
+    
+    UIViewController *topController = window.rootViewController;
+    while (topController.presentedViewController) {
+        topController = topController.presentedViewController;
+    }
+    
+    return topController;
+}
+
 %hook AWEAwemePlayVideoViewController
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
@@ -51,12 +92,10 @@
         }
         
         void (^tryFindAndSetPureMode)(void) = ^{
-            Class FeedTableVC = NSClassFromString(@"AWEFeedTableViewController");
-            UIViewController *feedVC = nil;
+            UIWindow *keyWindow = getActiveWindow();
             
-            UIWindow *keyWindow = [UIApplication sharedApplication].windows.firstObject;
             if (keyWindow && keyWindow.rootViewController) {
-                feedVC = [self findViewController:keyWindow.rootViewController ofClass:FeedTableVC];
+                UIViewController *feedVC = [self findViewController:keyWindow.rootViewController ofClass:NSClassFromString(@"AWEFeedTableViewController")];
                 if (feedVC) {
                     [feedVC setValue:@YES forKey:@"pureMode"];
                     if (timer) {
@@ -194,31 +233,7 @@
 }
 %end
 
-//%hook UIWindow
-//- (instancetype)initWithFrame:(CGRect)frame {
-//    UIWindow *window = %orig(frame);
-//    if (window) {
-//        UITapGestureRecognizer *doubleTapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleDoubleTapGesture:)];
-//        doubleTapGesture.numberOfTapsRequired = 1;
-//        doubleTapGesture.numberOfTouchesRequired = 3;
-//        [window addGestureRecognizer:doubleTapGesture];
-//    }
-//    return window;
-//}
-//
-//%new
-//- (void)handleDoubleTapGesture:(UITapGestureRecognizer *)gesture {
-//    if (gesture.state == UIGestureRecognizerStateRecognized) {
-//        UIViewController *rootViewController = self.rootViewController;
-//        if (rootViewController) {
-//            UIViewController *settingVC = [[NSClassFromString(@"DYYYSettingViewController") alloc] init];
-//            if (settingVC) {
-//                [rootViewController presentViewController:settingVC animated:YES completion:nil];
-//            }
-//        }
-//    }
-//}
-//%end
+%group DYYYSettingsGesture
 
 %hook UIWindow
 - (instancetype)initWithFrame:(CGRect)frame {
@@ -239,11 +254,19 @@
             UIViewController *settingVC = [[NSClassFromString(@"DYYYSettingViewController") alloc] init];
             
             if (settingVC) {
-                if (@available(iOS 15.0, *) && UIDevice.currentDevice.userInterfaceIdiom != UIUserInterfaceIdiomPad) {
-                    settingVC.modalPresentationStyle = UIModalPresentationPageSheet;
+                // 修复 @available 警告
+                BOOL isIPad = UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad;
+                if (@available(iOS 15.0, *)) {
+                    if (!isIPad) {
+                        settingVC.modalPresentationStyle = UIModalPresentationPageSheet;
+                    } else {
+                        settingVC.modalPresentationStyle = UIModalPresentationFullScreen;
+                    }
                 } else {
                     settingVC.modalPresentationStyle = UIModalPresentationFullScreen;
-                    
+                }
+                
+                if (settingVC.modalPresentationStyle == UIModalPresentationFullScreen) {
                     UIButton *closeButton = [UIButton buttonWithType:UIButtonTypeSystem];
                     [closeButton setTitle:@"关闭" forState:UIControlStateNormal];
                     closeButton.translatesAutoresizingMaskIntoConstraints = NO;
@@ -283,6 +306,8 @@
 - (void)closeSettings:(UIButton *)button {
     [button.superview.window.rootViewController dismissViewControllerAnimated:YES completion:nil];
 }
+%end
+
 %end
 
 %hook AWEFeedLiveMarkView
@@ -356,19 +381,6 @@
         CGRect frame = self.view.frame;
         frame.size.height = self.view.superview.frame.size.height - 83;
         self.view.frame = frame;
-    }
-    
-    BOOL shouldHideSubview = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"] || 
-                             [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableCommentBlur"];
-    
-    if (shouldHideSubview) {
-        for (UIView *subview in self.view.subviews) {
-            if ([subview isKindOfClass:[UIView class]] && 
-                subview.backgroundColor && 
-                CGColorEqualToColor(subview.backgroundColor.CGColor, [UIColor blackColor].CGColor)) {
-                subview.hidden = YES;
-            }
-        }
     }
 }
 %end
@@ -861,6 +873,22 @@
                 }
             }
         }
+        
+        UIViewController *vc = [self firstAvailableUIViewController];
+        if ([vc isKindOfClass:%c(AWEPlayInteractionViewController)]) {
+            BOOL shouldHideSubview = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"] || 
+                                [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableCommentBlur"];
+
+            if (shouldHideSubview) {
+                for (UIView *subview in self.subviews) {
+                    if ([subview isKindOfClass:[UIView class]] && 
+                        subview.backgroundColor && 
+                        CGColorEqualToColor(subview.backgroundColor.CGColor, [UIColor blackColor].CGColor)) {
+                        subview.hidden = YES;
+                    }
+                }
+            }
+        }
     }
 }
 %end
@@ -949,11 +977,10 @@
             [alertController addAction:cancelAction];
             [alertController addAction:confirmAction];
             
-            UIViewController *topController = [UIApplication sharedApplication].keyWindow.rootViewController;
-            while (topController.presentedViewController) {
-                topController = topController.presentedViewController;
+            UIViewController *topController = getActiveTopController();
+            if (topController) {
+                [topController presentViewController:alertController animated:YES completion:nil];
             }
-            [topController presentViewController:alertController animated:YES completion:nil];
         });
     }else {
         %orig;
@@ -990,11 +1017,10 @@
             [alertController addAction:cancelAction];
             [alertController addAction:confirmAction];
 
-            UIViewController *topController = [UIApplication sharedApplication].keyWindow.rootViewController;
-            while (topController.presentedViewController) {
-                topController = topController.presentedViewController;
+            UIViewController *topController = getActiveTopController();
+            if (topController) {
+                [topController presentViewController:alertController animated:YES completion:nil];
             }
-            [topController presentViewController:alertController animated:YES completion:nil];
         });
 
         return nil; // 阻止原始 block 立即执行
@@ -1154,43 +1180,6 @@
 
 %end
 
-//%ctor {
-//    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
-//        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-//        [defaults registerDefaults:@{@"isShowDYYYAlert": @(NO)}];
-//
-//        if (![defaults boolForKey:@"isShowDYYYAlert"]) {
-//            [defaults setBool:YES forKey:@"isShowDYYYAlert"];
-//            [defaults synchronize];
-//
-//            UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"by @huamidev"
-//                                                                           message:@"仅供学习交流 请在24小时内删除\n弹窗只会显示一次"
-//                                                                    preferredStyle:UIAlertControllerStyleAlert];
-//
-//            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:nil];
-//            [alert addAction:okAction];
-//
-//            UIAlertAction *goToChannelAction = [UIAlertAction actionWithTitle:@"前往频道" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-//                UIApplication *application = [UIApplication sharedApplication];
-//                NSURL *tgTestURL = [NSURL URLWithString:@"tg://"];
-//                NSURL *telegramTestURL = [NSURL URLWithString:@"telegram://"];
-//
-//                if ([application canOpenURL:tgTestURL] || [application canOpenURL:telegramTestURL]) {
-//                    NSURL *tgURL = [NSURL URLWithString:@"tg://resolve?domain=huamidev"];
-//                    [application openURL:tgURL options:@{} completionHandler:nil];
-//                } else {
-//                    NSURL *webURL = [NSURL URLWithString:@"https://t.me/huamidev"];
-//                    [application openURL:webURL options:@{} completionHandler:nil];
-//                }
-//            }];
-//            [alert addAction:goToChannelAction];
-//
-//            UIWindow *keyWindow = [UIApplication sharedApplication].keyWindow;
-//            [keyWindow.rootViewController presentViewController:alert animated:YES completion:nil];
-//        }
-//    });
-//}
-
 %hook AWEHPDiscoverFeedEntranceView
 - (void)setAlpha:(CGFloat)alpha {
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideDiscover"]) {
@@ -1292,3 +1281,181 @@
 }
 
 %end
+
+%hook AWELongPressPanelTableViewController
+
+- (NSArray *)dataArray {
+    NSArray *originalArray = %orig;
+    
+    if (!originalArray || originalArray.count == 0 || ![[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYCopyText"]) {
+        return originalArray;
+    }
+    
+    AWELongPressPanelViewGroupModel *customGroup = [[NSClassFromString(@"AWELongPressPanelViewGroupModel") alloc] init];
+    
+    AWELongPressPanelBaseViewModel *copyText = [[NSClassFromString(@"AWELongPressPanelBaseViewModel") alloc] init];
+    [copyText setAwemeModel:self.awemeModel];
+    [copyText setActionType:667];
+    [copyText setDuxIconName:@"ic_xiaoxihuazhonghua_outlined"];
+    [copyText setDescribeString:@"复制文案"];
+    
+    [copyText setAction:^{
+        NSString *descText = [self.awemeModel valueForKey:@"descriptionString"];
+        [[UIPasteboard generalPasteboard] setString:descText];
+        
+        UIWindow *window = getActiveWindow();
+        if (!window) return;
+        
+        UIView *toastView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 200, 60)];
+        toastView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.7];
+        toastView.layer.cornerRadius = 10;
+        toastView.center = window.center;
+        
+        UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, 200, 60)];
+        label.text = @"文案已复制到剪贴板";
+        label.textColor = [UIColor whiteColor];
+        label.textAlignment = NSTextAlignmentCenter;
+        label.font = [UIFont systemFontOfSize:15];
+        [toastView addSubview:label];
+        
+        [window addSubview:toastView];
+        
+        AWELongPressPanelManager *panelManager = [NSClassFromString(@"AWELongPressPanelManager") shareInstance];
+        [panelManager dismissWithAnimation:YES completion:nil];
+
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [UIView animateWithDuration:0.3 animations:^{
+                toastView.alpha = 0;
+            } completion:^(BOOL finished) {
+                [toastView removeFromSuperview];
+            }];
+        });
+    }];
+    
+    NSArray *customOptions = @[copyText];
+    [customGroup setGroupArr:customOptions];
+    
+    NSMutableArray *newArray = [NSMutableArray arrayWithArray:originalArray];
+    [newArray insertObject:customGroup atIndex:0];
+    
+    return newArray;
+}
+
+%end
+
+%hook AWEElementStackView
+
+- (void)layoutSubviews {
+    %orig;
+    if (![self.accessibilityLabel isEqualToString:@"right"]) {
+        return;
+    }
+    NSString *scaleValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYElementScale"];
+    if (scaleValue.length > 0) {
+        CGFloat scale = [scaleValue floatValue];
+        if (scale > 0 && scale != 1.0) {
+            NSMutableArray *originalPositions = [NSMutableArray array];
+            for (UIView *subview in self.subviews) {
+                [originalPositions addObject:@(subview.frame.origin.y)];
+            }
+            
+            for (UIView *subview in self.subviews) {
+                subview.transform = CGAffineTransformMakeScale(scale, scale);
+            }
+            
+            if (self.subviews.count > 1) {
+                for (int i = 1; i < self.subviews.count; i++) {
+                    UIView *currentView = self.subviews[i];
+                    UIView *previousView = self.subviews[i-1];
+                    
+                    CGFloat originalGap = [originalPositions[i] floatValue] - ([originalPositions[i-1] floatValue] + previousView.frame.size.height);
+                    CGFloat newGap = originalGap * scale;
+                    
+                    CGRect frame = currentView.frame;
+                    frame.origin.y = previousView.frame.origin.y + (previousView.frame.size.height * scale) + newGap;
+                    currentView.frame = frame;
+                }
+            }
+        }
+    }
+}
+
+%end
+
+%hook AWEFeedVideoButton
+
+- (void)setImage:(id)arg1 {
+    NSString *nameString = nil;
+    
+    if ([self respondsToSelector:@selector(imageNameString)]) {
+        nameString = [self performSelector:@selector(imageNameString)];
+    }
+    
+    if (!nameString) {
+        %orig;
+        return;
+    }
+    
+    NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    NSString *dyyyFolderPath = [documentsPath stringByAppendingPathComponent:@"DYYY"];
+    
+    [[NSFileManager defaultManager] createDirectoryAtPath:dyyyFolderPath 
+                            withIntermediateDirectories:YES 
+                                             attributes:nil 
+                                                  error:nil];
+    
+    NSDictionary *iconMapping = @{
+        @"icon_home_like_after": @"like_after.png",
+        @"icon_home_like_before": @"like_before.png",
+        @"icon_home_comment": @"comment.png",
+        @"icon_home_unfavorite": @"unfavorite.png",
+        @"icon_home_favorite": @"favorite.png",
+        @"iconHomeShareRight": @"share.png"
+    };
+    
+    NSString *customFileName = nil;
+    for (NSString *prefix in iconMapping.allKeys) {
+        if ([nameString hasPrefix:prefix]) {
+            customFileName = iconMapping[prefix];
+            break;
+        }
+    }
+    
+    if (customFileName) {
+        NSString *customImagePath = [dyyyFolderPath stringByAppendingPathComponent:customFileName];
+        
+        if ([[NSFileManager defaultManager] fileExistsAtPath:customImagePath]) {
+            UIImage *customImage = [UIImage imageWithContentsOfFile:customImagePath];
+            if (customImage) {
+                CGFloat targetWidth = 44.0;
+                CGFloat targetHeight = 44.0;
+                CGSize originalSize = customImage.size;
+                
+                CGFloat scale = MIN(targetWidth / originalSize.width, targetHeight / originalSize.height);
+                CGFloat newWidth = originalSize.width * scale;
+                CGFloat newHeight = originalSize.height * scale;
+                
+                UIGraphicsBeginImageContextWithOptions(CGSizeMake(newWidth, newHeight), NO, 0.0);
+                [customImage drawInRect:CGRectMake(0, 0, newWidth, newHeight)];
+                UIImage *resizedImage = UIGraphicsGetImageFromCurrentImageContext();
+                UIGraphicsEndImageContext();
+                
+                if (resizedImage) {
+                    %orig(resizedImage);
+                    return;
+                }
+            }
+        }
+    }
+    
+    %orig;
+}
+
+%end
+
+%ctor {
+    %init(DYYYSettingsGesture);
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"]) {
+        %init;
+    }
+}
