@@ -2102,13 +2102,38 @@ static BOOL isDownloadFlied = NO;
 }
 %end
 
-// 去广告功能
-%hook AwemeAdManager
-- (void)showAd {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"]) return;
-    %orig;
+// 去广告功能 过滤点赞
+%hook AWEAwemeModel
+
+- (id)initWithDictionary:(id)arg1 error:(id *)arg2 {
+    id orig = %orig;
+    
+    // 添加过滤逻辑
+    NSNumber *DyTuxLikeFilter = [[NSUserDefaults standardUserDefaults] objectForKey:@"DyTuxLikeFilter"];
+    if (DyTuxLikeFilter.integerValue > 0) {
+        // 检查是否存在额外搜索模型
+        AWESearchAwemeExtraModel *searchExtraModel = [orig searchExtraModel];
+        if (searchExtraModel) {
+            return orig; // 含额外搜索模型则保留
+        }
+        
+        // 检查点赞数阈值
+        AWEAwemeStatisticsModel *statistics = [orig statistics];
+        if (statistics) {
+            NSNumber *diggCount = [statistics diggCount];
+            if (diggCount.integerValue < DyTuxLikeFilter.integerValue) {
+                return nil; // 点赞数不足则过滤
+            }
+        }
+    }
+    
+    // 原广告过滤逻辑（已存在于文件中）
+    BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
+    return (noAds && self.isAds) ? nil : orig;
 }
+
 %end
+
 
 //隐藏顶栏关注下的提示线
 %hook AWEFeedMultiTabSelectedContainerView
