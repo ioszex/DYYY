@@ -558,39 +558,34 @@
 
 %end
 
-//去广告 过滤点赞
-
+// 去广告功能 过滤点赞
 %hook AWEAwemeModel
 
 - (id)initWithDictionary:(id)arg1 error:(id *)arg2 {
     id orig = %orig;
     
-    // 原有广告过滤逻辑
-    BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
-    if (noAds && self.isAds) {
-        return nil;
-    }
-    
-    // 新增点赞数过滤逻辑
+    // 添加过滤逻辑
     NSNumber *DyTuxLikeFilter = [[NSUserDefaults standardUserDefaults] objectForKey:@"DyTuxLikeFilter"];
     if (DyTuxLikeFilter.integerValue > 0) {
-        // 搜索相关模型不过滤
-        AWESearchAwemeExtraModel *searchExtraModel = [self searchExtraModel];
+        // 检查是否存在额外搜索模型
+        AWESearchAwemeExtraModel *searchExtraModel = [orig searchExtraModel];
         if (searchExtraModel) {
-            return orig;
+            return orig; // 含额外搜索模型则保留
         }
         
         // 检查点赞数阈值
-        AWEAwemeStatisticsModel *statistics = self.statistics;
+        AWEAwemeStatisticsModel *statistics = [orig statistics];
         if (statistics) {
-            NSNumber *diggCount = statistics.diggCount;
+            NSNumber *diggCount = [statistics diggCount];
             if (diggCount.integerValue < DyTuxLikeFilter.integerValue) {
-                return nil;
+                return nil; // 点赞数不足则过滤
             }
         }
     }
     
-    return orig;
+    // 原广告过滤逻辑（已存在于文件中）
+    BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
+    return (noAds && self.isAds) ? nil : orig;
 }
 
 %end
