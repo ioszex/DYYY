@@ -558,26 +558,43 @@
 
 %end
 
+//去广告 过滤点赞
+
 %hook AWEAwemeModel
 
 - (id)initWithDictionary:(id)arg1 error:(id *)arg2 {
     id orig = %orig;
+    
+    // 原有广告过滤逻辑
     BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
-    return (noAds && self.isAds) ? nil : orig;
-}
-
-- (id)init {
-    id orig = %orig;
-    BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
-    return (noAds && self.isAds) ? nil : orig;
-}
-
-- (void)setIsAds:(BOOL)isAds {
-    BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
-    %orig(noAds ? isAds : NO); 
+    if (noAds && self.isAds) {
+        return nil;
+    }
+    
+    // 新增点赞数过滤逻辑
+    NSNumber *DyTuxLikeFilter = [[NSUserDefaults standardUserDefaults] objectForKey:@"DyTuxLikeFilter"];
+    if (DyTuxLikeFilter.integerValue > 0) {
+        // 搜索相关模型不过滤
+        AWESearchAwemeExtraModel *searchExtraModel = [self searchExtraModel];
+        if (searchExtraModel) {
+            return orig;
+        }
+        
+        // 检查点赞数阈值
+        AWEAwemeStatisticsModel *statistics = self.statistics;
+        if (statistics) {
+            NSNumber *diggCount = statistics.diggCount;
+            if (diggCount.integerValue < DyTuxLikeFilter.integerValue) {
+                return nil;
+            }
+        }
+    }
+    
+    return orig;
 }
 
 %end
+
 
 %hook AWENormalModeTabBarBadgeContainerView
 
