@@ -11,6 +11,15 @@
 #import "AwemeHeaders.h"
 #import "DYYYManager.h"
 
+// 如果类是项目内的
+#import "AWESearchAwemeExtraModel.h"
+#import "AWEAwemeStatisticsModel.h"
+
+// 如果类来自私有框架（如抖音的私有API）
+#import <SomeFramework/AWESearchAwemeExtraModel.h>
+#import <SomeFramework/AWEAwemeStatisticsModel.h>
+
+
 %hook AWEAwemePlayVideoViewController
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
