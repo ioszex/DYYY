@@ -563,31 +563,31 @@
 
 - (id)initWithDictionary:(id)arg1 error:(id *)arg2 {
     id orig = %orig;
+    BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
+    id result = (noAds && self.isAds) ? nil : orig;
     
-    // 添加过滤逻辑
-    NSNumber *DyTuxLikeFilter = [[NSUserDefaults standardUserDefaults] objectForKey:@"DyTuxLikeFilter"];
-    if (DyTuxLikeFilter.integerValue > 0) {
-        // 检查是否存在额外搜索模型
-        AWESearchAwemeExtraModel *searchExtraModel = [orig searchExtraModel];
-        if (searchExtraModel) {
-            return orig; // 含额外搜索模型则保留
-        }
-        
-        // 检查点赞数阈值
-        AWEAwemeStatisticsModel *statistics = [orig statistics];
-        if (statistics) {
-            NSNumber *diggCount = [statistics diggCount];
-            if (diggCount.integerValue < DyTuxLikeFilter.integerValue) {
-                return nil; // 点赞数不足则过滤
+    // 添加点赞过滤逻辑
+    if (result) {
+        NSNumber *DyTuxLikeFilter = [[NSUserDefaults standardUserDefaults] objectForKey:@"DyTuxLikeFilter"];
+        if(DyTuxLikeFilter.integerValue > 0){
+            AWESearchAwemeExtraModel *searchExtraModel = [result searchExtraModel];
+            if (searchExtraModel) {
+                return result;
+            }
+            AWEAwemeStatisticsModel *statistics = [result statistics];
+            if (statistics) {
+                NSNumber *diggCount = statistics.diggCount;
+                if (diggCount.integerValue < DyTuxLikeFilter.integerValue) {
+                    return nil;
+                }
             }
         }
     }
     
-    // 原广告过滤逻辑（已存在于文件中）
-    BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
-    return (noAds && self.isAds) ? nil : orig;
+    return result;
 }
 
+// 原其他方法保持不变...
 %end
 
 
