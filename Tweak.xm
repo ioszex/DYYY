@@ -354,20 +354,22 @@ static void *kViewModelKey = &kViewModelKey;
 %new - (NSArray<AWESettingItemModel *> *)createEnhanceSettingsItems {
     NSArray *enhanceSettings = @[
         @{@"identifier": @"DYYYDoubleClickedDownload", @"title": @"双击下载", @"detail": @"", @"cellType": @6, @"imageName": @"ic_boxarrowdownhigh_outlined"},
+
+@{@"identifier": @"DYYYLongPressDownload", @"title": @"长按下载", @"detail": @"", @"cellType": @6, @"imageName": @"ic_boxarrowdownhigh_outlined"},
+
         @{@"identifier": @"DYYYEnableDoubleOpenComment", @"title": @"双击打开评论区", @"detail": @"", @"cellType": @6, @"imageName": @"ic_star_outlined_12"},
-        @{@"identifier": @"DYYYLongPressDownload", @"title": @"长按下载", @"detail": @"", @"cellType": @6, @"imageName": @"ic_boxarrowdownhigh_outlined"},
-
-        @{@"identifier": @"DYYYCommentLivePhotoNotWaterMark", @"title": @"移除评论实况水印", @"detail": @"", @"cellType": @6, @"imageName": @"ic_livephoto_outlined"},
-
-@{@"identifier": @"DYYYCopyText", @"title": @"长按面板复制文案", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xiaoxihuazhonghua_outlined"},
-
-@{@"identifier": @"DYYYNoAds", @"title": @"去广告", @"detail": @"", @"cellType": @6, @"imageName": @"ic_star_outlined_12"},
 
 @{@"identifier": @"DYYYCommentNotWaterMark", @"title": @"移除评论图片水印", @"detail": @"", @"cellType": @6, @"imageName": @"ic_boxarrowdownhigh_outlined"},
 
 @{@"identifier": @"DYYYFourceDownloadEmotion", @"title": @"保存评论区表情包", @"detail": @"", @"cellType": @6, @"imageName": @"ic_boxarrowdownhigh_outlined"},
 
+@{@"identifier": @"DYYYCommentLivePhotoNotWaterMark", @"title": @"移除评论实况水印", @"detail": @"", @"cellType": @6, @"imageName": @"ic_livephoto_outlined"},
+
+@{@"identifier": @"DYYYCopyText", @"title": @"长按面板复制文案", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xiaoxihuazhonghua_outlined"},
+
 @{@"identifier": @"DYYYCommentCopyText", @"title": @"长按评论复制文案", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xiaoxihuazhonghua_outlined"},
+
+@{@"identifier": @"DYYYNoAds", @"title": @"去广告", @"detail": @"", @"cellType": @6, @"imageName": @"ic_star_outlined_12"},
 
     ];
     return [self createItemsFromArray:enhanceSettings svgIcon:YES];
