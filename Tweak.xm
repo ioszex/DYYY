@@ -296,6 +296,7 @@ static void *kViewModelKey = &kViewModelKey;
         @{@"identifier": @"DYYYtopbartransparent", @"title": @"设置顶栏透明", @"detail": @"0-1小数", @"cellType": @26, @"imageName": @"ic_ipadiphone_outlined"},
         @{@"identifier": @"DYYYGlobalTransparency", @"title": @"设置全局透明", @"detail": @"0-1的小数", @"cellType": @26, @"imageName": @"ic_ipadiphone_outlined"},
         @{@"identifier": @"DYYYDefaultSpeed", @"title": @"设置默认倍速", @"detail": @"", @"cellType": @26, @"imageName": @"ic_ipadiphone_outlined"},
+@{@"identifier": @"DYYYElementScale", @"title": @"右侧栏缩放度", @"detail": @"", @"cellType": @26, @"imageName": @"ic_ipadiphone_outlined"},
         @{@"identifier": @"DYYYIndexTitle", @"title": @"设置首页标题", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_ipadiphone_outlined"},
         @{@"identifier": @"DYYYFriendsTitle", @"title": @"设置朋友标题", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_ipadiphone_outlined"},
         @{@"identifier": @"DYYYMsgTitle", @"title": @"设置消息标题", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_ipadiphone_outlined"},
