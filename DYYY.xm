@@ -11,11 +11,6 @@
 #import "AwemeHeaders.h"
 #import "DYYYManager.h"
 
-// 如果类是项目内的
-#import "AWESearchAwemeExtraModel.h"
-#import "AWEAwemeStatisticsModel.h"
-
-
 %hook AWEAwemePlayVideoViewController
 
 - (void)setIsAutoPlay:(BOOL)arg0 {
@@ -563,36 +558,26 @@
 
 %end
 
-// 去广告功能 过滤点赞
+// 去广告
 %hook AWEAwemeModel
 
 - (id)initWithDictionary:(id)arg1 error:(id *)arg2 {
     id orig = %orig;
     BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
-    id result = (noAds && self.isAds) ? nil : orig;
-    
-    // 添加点赞过滤逻辑
-    if (result) {
-        NSNumber *DyTuxLikeFilter = [[NSUserDefaults standardUserDefaults] objectForKey:@"DyTuxLikeFilter"];
-        if(DyTuxLikeFilter.integerValue > 0){
-            AWESearchAwemeExtraModel *searchExtraModel = [result searchExtraModel];
-            if (searchExtraModel) {
-                return result;
-            }
-            AWEAwemeStatisticsModel *statistics = [result statistics];
-            if (statistics) {
-                NSNumber *diggCount = statistics.diggCount;
-                if (diggCount.integerValue < DyTuxLikeFilter.integerValue) {
-                    return nil;
-                }
-            }
-        }
-    }
-    
-    return result;
+    return (noAds && self.isAds) ? nil : orig;
 }
 
-// 原其他方法保持不变...
+- (id)init {
+    id orig = %orig;
+    BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
+    return (noAds && self.isAds) ? nil : orig;
+}
+
+- (void)setIsAds:(BOOL)isAds {
+    BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
+    %orig(noAds ? isAds : NO); 
+}
+
 %end
 
 
