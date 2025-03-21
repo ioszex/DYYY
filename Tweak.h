@@ -29,7 +29,7 @@ extern void showViewController(NSString *title, NSString *content, void (^onConf
 #endif
 
 #define DYYY @"DYYY"
-#define tweakVersion @"2.1-7(Beta1)"
+#define tweakVersion @"2.1-7+"
 
 @interface AWEURLModel : NSObject
 @property (copy, nonatomic) NSArray* originURLList;
