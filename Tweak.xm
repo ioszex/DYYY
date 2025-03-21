@@ -401,7 +401,7 @@ static void *kViewModelKey = &kViewModelKey;
                     AWESettingsViewModel *viewModel = [[%c(AWESettingsViewModel) alloc] init];
                     viewModel.colorStyle = 0;
                     NSArray *sections = @[
-                        [self createSectionWithTitle:@"用于调整抖音UI的Tweak\n仅在33.4.0+版本中测试\n仅供学习交流\n\n当前插件版本 2.1-7(Beta1)" items:[self createTestItems]]
+                        [self createSectionWithTitle:@"用于调整抖音UI的Tweak\n仅在33.4.0+版本中测试\n仅供学习交流\n\n当前插件版本 2.1-7+" items:[self createTestItems]]
                     ];
                     viewModel.sectionDataArray = sections;
                     objc_setAssociatedObject(openSourceVC, kViewModelKey, viewModel, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
