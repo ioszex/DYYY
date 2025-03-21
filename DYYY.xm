@@ -1502,6 +1502,8 @@ imageViewModel.duxIconName = @"ic_livephoto_outlined";
                 }
                 
                 if (hasLivePhoto) {
+
+allImagesViewModel.duxIconName = @"ic_livephoto_outlined";
                     allImagesViewModel.describeString = @"保存所有实况";
                 }
 
@@ -1751,7 +1753,9 @@ imageViewModel.duxIconName = @"ic_livephoto_outlined";
                 }
                 
                 if (hasLivePhoto) {
-                    allImagesViewModel.describeString = @"保存所有实况";
+
+allImagesViewModel.duxIconName = @"ic_livephoto_outlined";
+                   allImagesViewModel.describeString = @"保存所有实况";
                 }
 
                 allImagesViewModel.action = ^{
