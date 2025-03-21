@@ -1451,6 +1451,7 @@
                         
             AWEImageAlbumImageModel *currimge = self.awemeModel.albumImages[self.awemeModel.currentImageIndex - 1];
              if (currimge.clipVideo != nil) {
+imageViewModel.duxIconName = @"ic_livephoto_outlined";
                 imageViewModel.describeString = @"保存当前实况";
              }
             imageViewModel.action = ^{
@@ -1699,6 +1700,7 @@
                         
             AWEImageAlbumImageModel *currimge = self.awemeModel.albumImages[self.awemeModel.currentImageIndex - 1];
              if (currimge.clipVideo != nil) {
+imageViewModel.duxIconName = @"ic_livephoto_outlined";
                 imageViewModel.describeString = @"保存当前实况";
              }
             imageViewModel.action = ^{
