@@ -1,7 +1,6 @@
 /*自行扩展功能 本人仅做一个简单的框架与部分功能*/
 
 #import "Tweak.h"
-#import "DYYYManager.h"
 
 UIViewController *topView(void) {
     UIWindow *window;
@@ -483,97 +482,73 @@ static void *kViewModelKey = &kViewModelKey;
         return;
     }
     if (!getUserDefaults(@"DYYYDoubleClickedDownload")) return %orig;
-    
     AWEAwemeModel *awemeModel = self.model;
     AWEVideoModel *videoModel = awemeModel.video;
     AWEMusicModel *musicModel = awemeModel.music;
 
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"功能选择" 
-                                                                             message:nil 
-                                                                      preferredStyle:UIAlertControllerStyleActionSheet];
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"无水印解析" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
 
-    // 检测实况照片
-    BOOL isLivePhoto = NO;
-    NSInteger livePhotoCount = 0;
-    if (awemeModel.awemeType == 68) {
-        AWEImageAlbumImageModel *currentImage = awemeModel.albumImages[awemeModel.currentImageIndex - 1];
-        isLivePhoto = (currentImage.clipVideo != nil);
-        
-        // 统计所有实况照片
-        for (AWEImageAlbumImageModel *image in awemeModel.albumImages) {
-            if (image.clipVideo != nil) {
-                livePhotoCount++;
-            }
+    NSString *typeStr = @"下载视频";
+    NSInteger aweType = awemeModel.awemeType;
+    int allImages = 0;
+
+    if (aweType == 68) {
+        typeStr = @"下载图片";
+        allImages = 1;
+    }
+
+    [alertController addAction:[UIAlertAction actionWithTitle:typeStr style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSURL *url = nil;
+        if (aweType == 68) {
+            AWEImageAlbumImageModel *currentImageModel = awemeModel.albumImages.count == 1 ? awemeModel.albumImages.firstObject : awemeModel.albumImages[awemeModel.currentImageIndex - 1];
+            url = [NSURL URLWithString:currentImageModel.urlList.firstObject];
+            downloadMedia(url, MediaTypeImage, ^{
+                showToast(@"图片已保存到相册");
+            });
+        } else {
+            url = [NSURL URLWithString:videoModel.h264URL.originURLList.firstObject];
+            downloadMedia(url, MediaTypeVideo, ^{
+                showToast(@"视频已保存到相册");
+            });
         }
-    }
-
-    // 视频/图片下载
-    NSString *mainActionTitle = (awemeModel.awemeType == 68) ? @"下载当前图片" : @"下载视频";
-    [alertController addAction:[UIAlertAction actionWithTitle:mainActionTitle 
-                                                        style:UIAlertActionStyleDefault 
-                                                      handler:^(UIAlertAction *action) {
-        // 原有下载逻辑
     }]];
 
-    // 新增实况照片选项
-    if (isLivePhoto) {
-        [alertController addAction:[UIAlertAction actionWithTitle:@"保存当前实况" 
-                                                          style:UIAlertActionStyleDefault 
-                                                        handler:^(UIAlertAction *action) {
-            AWEImageAlbumImageModel *currentImage = awemeModel.albumImages[awemeModel.currentImageIndex - 1];
-            NSURL *imageURL = [NSURL URLWithString:currentImage.urlList.firstObject];
-            NSURL *videoURL = [currentImage.clipVideo.playURL getDYYYSrcURLDownload];
-            
-            [DYYYManager downloadLivePhoto:imageURL 
-                                  videoURL:videoURL 
-                                completion:^{
-                [DYYYManager showToast:@"实况照片已保存"];
-            }];
-        }]];
-    }
-
-    // 批量保存实况
-    if (livePhotoCount > 1) {
-        [alertController addAction:[UIAlertAction actionWithTitle:@"保存所有实况" 
-                                                          style:UIAlertActionStyleDefault 
-                                                        handler:^(UIAlertAction *action) {
-            NSMutableArray *livePhotos = [NSMutableArray array];
-            for (AWEImageAlbumImageModel *image in awemeModel.albumImages) {
-                if (image.clipVideo != nil) {
-                    [livePhotos addObject:@{
-                        @"imageURL": image.urlList.firstObject,
-                        @"videoURL": [image.clipVideo.playURL getDYYYSrcURLDownload].absoluteString
-                    }];
-                }
+    if (allImages) {
+        [alertController addAction:[UIAlertAction actionWithTitle:@"下载全部图片" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+            NSMutableArray *imageURLs = [NSMutableArray array];
+            for (AWEImageAlbumImageModel *imageModel in awemeModel.albumImages) {
+                [imageURLs addObject:imageModel.urlList.firstObject];
             }
-            [DYYYManager downloadAllLivePhotos:livePhotos];
+            downloadAllImages(imageURLs);
         }]];
     }
 
-    // 保留原有其他功能
-    [alertController addAction:[UIAlertAction actionWithTitle:@"下载音频" 
-                                                      style:UIAlertActionStyleDefault 
-                                                    handler:^(UIAlertAction *action) {
-        // 原有音频下载逻辑
-    }]];
-    
-    [alertController addAction:[UIAlertAction actionWithTitle:@"复制文案" 
-                                                      style:UIAlertActionStyleDefault 
-                                                    handler:^(UIAlertAction *action) {
-        NSString *descText = [awemeModel valueForKey:@"descriptionString"];
-        [[UIPasteboard generalPasteboard] setString:descText];
-        [DYYYManager showToast:@"文案已复制"];
-    }]];
-    
-    [alertController addAction:[UIAlertAction actionWithTitle:@"打开评论区" 
-                                                      style:UIAlertActionStyleDefault 
-                                                    handler:^(UIAlertAction *action) {
-        [self performCommentAction];
+    [alertController addAction:[UIAlertAction actionWithTitle:@"下载音频" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSURL *url = [NSURL URLWithString:musicModel.playURL.originURLList.firstObject];
+        downloadMedia(url, MediaTypeAudio, nil);
     }]];
 
-    [alertController addAction:[UIAlertAction actionWithTitle:@"取消" 
-                                                       style:UIAlertActionStyleCancel 
-                                                     handler:nil]];
+// 新增复制文案功能
+[alertController addAction:[UIAlertAction actionWithTitle:@"复制文案" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+    NSString *descText = [awemeModel valueForKey:@"descriptionString"]; // 注意这里改用当前作用域的 awemeModel
+    [[UIPasteboard generalPasteboard] setString:descText];
+    showToast(@"已复制到剪贴板");
+}]];
+
+// 打开评论区功能
+[alertController addAction:[UIAlertAction
+        actionWithTitle:@"打开评论区"
+        style:UIAlertActionStyleDefault
+        handler:^(UIAlertAction *action) {
+            // 调用评论操作方法
+            [self performCommentAction];
+        }]];
+
+    [alertController addAction:[UIAlertAction actionWithTitle:@"点赞视频" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        %orig;
+    }]];
+
+    [alertController addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
 
     [self presentViewController:alertController animated:YES completion:nil];
 }
