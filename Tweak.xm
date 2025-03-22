@@ -482,11 +482,18 @@ static void *kViewModelKey = &kViewModelKey;
         return;
     }
     if (!getUserDefaults(@"DYYYDoubleClickedDownload")) return %orig;
+    
     AWEAwemeModel *awemeModel = self.model;
     AWEVideoModel *videoModel = awemeModel.video;
     AWEMusicModel *musicModel = awemeModel.music;
+    
+    // 新增实况照片检测逻辑
+    BOOL isLivePhoto = awemeModel.awemeType == 68 && [self hasLivePhotoAssets:awemeModel];
+    NSInteger livePhotoCount = [self countLivePhotoAssets:awemeModel];
 
-    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"无水印解析" message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"无水印解析" 
+                                                                            message:nil 
+                                                                     preferredStyle:UIAlertControllerStyleActionSheet];
 
     NSString *typeStr = @"下载视频";
     NSInteger aweType = awemeModel.awemeType;
@@ -495,8 +502,28 @@ static void *kViewModelKey = &kViewModelKey;
     if (aweType == 68) {
         typeStr = @"下载图片";
         allImages = 1;
+        
+        // 添加实况照片选项
+        if (isLivePhoto) {
+            // 保存当前实况
+            [alertController addAction:[UIAlertAction actionWithTitle:@"保存当前实况" 
+                                                               style:UIAlertActionStyleDefault 
+                                                             handler:^(UIAlertAction *action) {
+                [self saveCurrentLivePhoto:awemeModel];
+            }]];
+            
+            // 保存所有实况（当有多个时显示）
+            if (livePhotoCount > 1) {
+                [alertController addAction:[UIAlertAction actionWithTitle:@"保存全部实况" 
+                                                                  style:UIAlertActionStyleDefault 
+                                                                handler:^(UIAlertAction *action) {
+                    [self saveAllLivePhotos:awemeModel];
+                }]];
+            }
+        }
     }
 
+    // 原始下载功能保持不变
     [alertController addAction:[UIAlertAction actionWithTitle:typeStr style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         NSURL *url = nil;
         if (aweType == 68) {
@@ -523,26 +550,21 @@ static void *kViewModelKey = &kViewModelKey;
         }]];
     }
 
+    // 以下原有功能保持不变
     [alertController addAction:[UIAlertAction actionWithTitle:@"下载音频" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         NSURL *url = [NSURL URLWithString:musicModel.playURL.originURLList.firstObject];
         downloadMedia(url, MediaTypeAudio, nil);
     }]];
 
-// 新增复制文案功能
-[alertController addAction:[UIAlertAction actionWithTitle:@"复制文案" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
-    NSString *descText = [awemeModel valueForKey:@"descriptionString"]; // 注意这里改用当前作用域的 awemeModel
-    [[UIPasteboard generalPasteboard] setString:descText];
-    showToast(@"已复制到剪贴板");
-}]];
+    [alertController addAction:[UIAlertAction actionWithTitle:@"复制文案" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        NSString *descText = [awemeModel valueForKey:@"descriptionString"];
+        [[UIPasteboard generalPasteboard] setString:descText];
+        showToast(@"已复制到剪贴板");
+    }]];
 
-// 打开评论区功能
-[alertController addAction:[UIAlertAction
-        actionWithTitle:@"打开评论区"
-        style:UIAlertActionStyleDefault
-        handler:^(UIAlertAction *action) {
-            // 调用评论操作方法
-            [self performCommentAction];
-        }]];
+    [alertController addAction:[UIAlertAction actionWithTitle:@"打开评论区" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
+        [self performCommentAction];
+    }]];
 
     [alertController addAction:[UIAlertAction actionWithTitle:@"点赞视频" style:UIAlertActionStyleDefault handler:^(UIAlertAction *action) {
         %orig;
@@ -551,6 +573,77 @@ static void *kViewModelKey = &kViewModelKey;
     [alertController addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
 
     [self presentViewController:alertController animated:YES completion:nil];
+}
+
+%new
+- (BOOL)hasLivePhotoAssets:(AWEAwemeModel *)model {
+    if (model.awemeType != 68) return NO;
+    __block BOOL hasLiveAssets = NO;
+    [model.albumImages enumerateObjectsUsingBlock:^(AWEImageAlbumImageModel *obj, NSUInteger idx, BOOL *stop) {
+        if ([obj.urlList.firstObject containsString:@"live_photo"] || 
+            [obj.urlList.firstObject.pathExtension isEqualToString:@"mov"]) {
+            hasLiveAssets = YES;
+            *stop = YES;
+        }
+    }];
+    return hasLiveAssets;
+}
+
+%new
+- (NSInteger)countLivePhotoAssets:(AWEAwemeModel *)model {
+    if (model.awemeType != 68) return 0;
+    __block NSInteger count = 0;
+    [model.albumImages enumerateObjectsUsingBlock:^(AWEImageAlbumImageModel *obj, NSUInteger idx, BOOL *stop) {
+        if ([obj.urlList.firstObject containsString:@"live_photo"] || 
+            [obj.urlList.firstObject.pathExtension isEqualToString:@"mov"]) {
+            count++;
+        }
+    }];
+    return count;
+}
+
+%new
+- (void)saveCurrentLivePhoto:(AWEAwemeModel *)model {
+    AWEImageAlbumImageModel *currentModel = model.albumImages[model.currentImageIndex];
+    NSURL *imageURL = [NSURL URLWithString:currentModel.urlList.firstObject];
+    NSURL *videoURL = [self findPairedVideoURL:currentModel];
+    
+    if (videoURL) {
+        downloadLivePhoto(imageURL, videoURL, ^{
+            showToast(@"实况照片已保存");
+        });
+    } else {
+        downloadMedia(imageURL, MediaTypeImage, ^{
+            showToast(@"图片已保存（无动态资源）");
+        });
+    }
+}
+
+%new
+- (void)saveAllLivePhotos:(AWEAwemeModel *)model {
+    NSMutableArray *livePairs = [NSMutableArray array];
+    [model.albumImages enumerateObjectsUsingBlock:^(AWEImageAlbumImageModel *obj, NSUInteger idx, BOOL *stop) {
+        NSURL *videoURL = [self findPairedVideoURL:obj];
+        if (videoURL) {
+            [livePairs addObject:@[[NSURL URLWithString:obj.urlList.firstObject], videoURL]];
+        }
+    }];
+    
+    if (livePairs.count > 0) {
+        downloadAllLivePhotos(livePairs, ^{
+            showToast([NSString stringWithFormat:@"已保存%ld个实况照片", livePairs.count]);
+        });
+    } else {
+        showToast(@"未找到可保存的实况照片");
+    }
+}
+
+%new
+- (NSURL *)findPairedVideoURL:(AWEImageAlbumImageModel *)imageModel {
+    // 实现动态视频资源匹配逻辑（根据实际API结构调整）
+    NSString *videoPath = [[imageModel.urlList.firstObject stringByDeletingPathExtension] 
+                          stringByAppendingPathExtension:@"mov"];
+    return [NSURL URLWithString:videoPath];
 }
 
 %end
