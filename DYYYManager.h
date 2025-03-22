@@ -24,5 +24,11 @@
 + (void)downloadAllImages:(NSMutableArray *)imageURLs;
 + (void)downloadAllImagesWithProgress:(NSMutableArray *)imageURLs progress:(void (^)(NSInteger current, NSInteger total))progressBlock completion:(void (^)(NSInteger successCount, NSInteger totalCount))completion;
 - (void)saveLivePhoto:(NSString *)imageSourcePath videoUrl:(NSString *)videoSourcePath;
+//新增加
++ (void)downloadLivePhoto:(NSURL *)url;
++ (void)downloadAllLivePhotos:(NSArray *)photos;
++ (void)showToast:(NSString *)message;
 
 @end 
+
+
