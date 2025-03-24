@@ -2378,8 +2378,8 @@ static BOOL isDownloadFlied = NO;
     [alertController addAction:[UIAlertAction actionWithTitle:@"取消" style:UIAlertActionStyleCancel handler:nil]];
 
     [self presentViewController:alertController animated:YES completion:nil];
+    }
 }
-
 %end
 
 %ctor {
