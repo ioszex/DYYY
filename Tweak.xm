@@ -1,8 +1,6 @@
-#import <substrate.h>
-#import <objc/runtime.h>
-#import <Foundation/Foundation.h>
 #import <UIKit/UIKit.h>
-#import <Photos/Photos.h>
+#import <objc/runtime.h>
+#import "AwemeHeaders.h"
 
 @interface AWESettingBaseViewModel : NSObject
 @end
@@ -556,8 +554,8 @@ static void setUserDefaults(id object, NSString *key) {
     [[NSUserDefaults standardUserDefaults] setObject:object forKey:key];
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
-#undef  海螺助手
-#define 海螺助手 @"海螺助手设置"
+#undef DYYY
+#define DYYY @"DYYY设置"
 
 static void *kViewModelKey = &kViewModelKey;
 %hook AWESettingBaseViewController
@@ -614,16 +612,16 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
     NSArray *originalSections = %orig;
     BOOL sectionExists = NO;
     for (AWESettingSectionModel *section in originalSections) {
-        if ([section.sectionHeaderTitle isEqualToString:@"海螺助手"]) {
+        if ([section.sectionHeaderTitle isEqualToString:@"DYYY"]) {
             sectionExists = YES;
             break;
         }
     }
     if (self.traceEnterFrom && !sectionExists) {
         AWESettingItemModel *dyyyItem = [[%c(AWESettingItemModel) alloc] init];
-        dyyyItem.identifier = @"海螺助手";
-        dyyyItem.title = @"海螺助手";
-        dyyyItem.detail = @"v2.2-0";
+        dyyyItem.identifier = @"DYYY";
+        dyyyItem.title = @"DYYY";
+        dyyyItem.detail = @"v2.1-7";
         dyyyItem.type = 0;
         dyyyItem.iconImageName = @"noticesettting_like";
         dyyyItem.cellType = 26;
@@ -640,7 +638,7 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                         if ([subview isKindOfClass:%c(AWENavigationBar)]) {
                             AWENavigationBar *navigationBar = (AWENavigationBar *)subview;
                             if ([navigationBar respondsToSelector:@selector(titleLabel)]) {
-                                navigationBar.titleLabel.text = 海螺助手;
+                                navigationBar.titleLabel.text = DYYY;
                             }
                             break;
                         }
@@ -698,6 +696,27 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 
                 for (NSDictionary *dict in videoSettings) {
                     AWESettingItemModel *item = [self createSettingItem:dict cellTapHandlers:cellTapHandlers];
+                    
+                    // 特殊处理默认倍速选项，使用showSpeedSelectionSheet而不是输入框
+                    if ([item.identifier isEqualToString:@"DYYYDefaultSpeed"]) {
+                        // 获取已保存的默认倍速值
+                        NSString *savedSpeed = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDefaultSpeed"];
+                        if (savedSpeed && savedSpeed.length > 0) {
+                            item.detail = savedSpeed;
+                        } else {
+                            item.detail = @"点击选择";
+                        }
+                        
+                        // 覆盖默认的cellTappedBlock
+                        item.cellTappedBlock = ^{
+                            NSArray<NSString *> *speedOptions = @[@"0.75x", @"1.0x", @"1.25x", @"1.5x", @"2.0x", @"2.5x", @"3.0x"];
+                            showSpeedSelectionSheet(rootVC, speedOptions, ^(NSInteger selectedIndex, NSString *selectedValue) {
+                                setUserDefaults(selectedValue, @"DYYYDefaultSpeed");
+                                item.detail = selectedValue;
+                            });
+                        };
+                    }
+                    
                     [videoItems addObject:item];
                 }
                 
@@ -770,7 +789,7 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 NSMutableArray<AWESettingItemModel *> *transparencyItems = [NSMutableArray array];
                 NSArray *transparencySettings = @[
                     @{@"identifier": @"DYYYtopbartransparent", @"title": @"设置顶栏透明", @"detail": @"0-1小数", @"cellType": @26, @"imageName": @"ic_module_outlined_20"},
-                    @{@"identifier": @"DYYYGlobalTransparency", @"title": @"设置全局透明", @"detail": @"0-1小数", @"cellType": @26, @"imageName": @"ic_eyeslash_outlined_20"},
+                    @{@"identifier": @"DYYYGlobalTransparency", @"title": @"设置全局透明", @"detail": @"0-1小数", @"cellType": @26, @"imageName": @"ic_eye_outlined_20"},
                     @{@"identifier": @"DYYYisEnableCommentBlur", @"title": @"评论区毛玻璃", @"detail": @"", @"cellType": @6, @"imageName": @"ic_comment_outlined_20"}
                 ];
                 
@@ -788,17 +807,6 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 
                 for (NSDictionary *dict in scaleSettings) {
                     AWESettingItemModel *item = [self createSettingItem:dict cellTapHandlers:cellTapHandlers];
-                    // 特殊处理默认倍速选项
-                    if ([item.identifier isEqualToString:@"DYYYDefaultSpeed"]) {
-                        cellTapHandlers[item.identifier] = ^{
-                            NSArray<NSString *> *speedOptions = @[ @"0.75x", @"1.0x", @"1.25x", @"1.5x", @"2.0x", @"2.5x", @"3.0x"];
-                            showSpeedSelectionSheet(rootVC, speedOptions, ^(NSInteger selectedIndex, NSString *selectedValue) {
-                                setUserDefaults(selectedValue, @"DYYYDefaultSpeed");
-                                item.detail = selectedValue;
-                            });
-                        };
-                        item.cellTappedBlock = cellTapHandlers[item.identifier];
-                    }
                     [scaleItems addObject:item];
                 }
                 
@@ -1049,14 +1057,14 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
             AWESettingItemModel *aboutItem = [[%c(AWESettingItemModel) alloc] init];
             aboutItem.identifier = @"DYYYAbout";
             aboutItem.title = @"关于插件";
-            aboutItem.detail = @"v2.2-0";
+            aboutItem.detail = @"v2.1-7";
             aboutItem.type = 0;
             aboutItem.iconImageName = @"awe-settings-icon-about";
             aboutItem.cellType = 26;
             aboutItem.colorStyle = 0;
             aboutItem.isEnable = YES;
             aboutItem.cellTappedBlock = ^{
-                showAboutDialog(@"关于海螺助手", @"版本: v2.2.0", nil);
+                showAboutDialog(@"关于DYYY", @"版本: v2.1-7\n\n感谢使用DYYY\n\n@维他入我心 基于DYYY二次开发\n\n感谢开源", nil);
             };
             [aboutItems addObject:aboutItem];
             
@@ -1121,3 +1129,4 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
     return item;
 }
 %end
+
