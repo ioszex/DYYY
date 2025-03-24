@@ -556,7 +556,7 @@ static void setUserDefaults(id object, NSString *key) {
     [[NSUserDefaults standardUserDefaults] setObject:object forKey:key];
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
-#undef 海螺助手
+#undef DYYY
 #define 海螺助手 @"海螺助手设置"
 
 static void *kViewModelKey = &kViewModelKey;
@@ -640,7 +640,7 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                         if ([subview isKindOfClass:%c(AWENavigationBar)]) {
                             AWENavigationBar *navigationBar = (AWENavigationBar *)subview;
                             if ([navigationBar respondsToSelector:@selector(titleLabel)]) {
-                                navigationBar.titleLabel.text = DYYY;
+                                navigationBar.titleLabel.text = 海螺助手;
                             }
                             break;
                         }
