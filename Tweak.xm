@@ -556,7 +556,7 @@ static void setUserDefaults(id object, NSString *key) {
     [[NSUserDefaults standardUserDefaults] setObject:object forKey:key];
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
-#undef DYYY
+#undef  海螺助手
 #define 海螺助手 @"海螺助手设置"
 
 static void *kViewModelKey = &kViewModelKey;
