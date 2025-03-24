@@ -556,8 +556,8 @@ static void setUserDefaults(id object, NSString *key) {
     [[NSUserDefaults standardUserDefaults] setObject:object forKey:key];
     [[NSUserDefaults standardUserDefaults] synchronize];
 }
-#undef DYYY
-#define DYYY @"DYYY设置"
+#undef 海螺助手
+#define 海螺助手 @"海螺助手设置"
 
 static void *kViewModelKey = &kViewModelKey;
 %hook AWESettingBaseViewController
@@ -614,16 +614,16 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
     NSArray *originalSections = %orig;
     BOOL sectionExists = NO;
     for (AWESettingSectionModel *section in originalSections) {
-        if ([section.sectionHeaderTitle isEqualToString:@"DYYY"]) {
+        if ([section.sectionHeaderTitle isEqualToString:@"海螺助手"]) {
             sectionExists = YES;
             break;
         }
     }
     if (self.traceEnterFrom && !sectionExists) {
         AWESettingItemModel *dyyyItem = [[%c(AWESettingItemModel) alloc] init];
-        dyyyItem.identifier = @"DYYY";
-        dyyyItem.title = @"DYYY";
-        dyyyItem.detail = @"v2.1-7";
+        dyyyItem.identifier = @"海螺助手";
+        dyyyItem.title = @"海螺助手";
+        dyyyItem.detail = @"v2.2-0";
         dyyyItem.type = 0;
         dyyyItem.iconImageName = @"noticesettting_like";
         dyyyItem.cellType = 26;
@@ -1056,7 +1056,7 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
             aboutItem.colorStyle = 0;
             aboutItem.isEnable = YES;
             aboutItem.cellTappedBlock = ^{
-                showAboutDialog(@"关于DYYY", @"版本: v2.1-7\n\n感谢使用DYYY\n\n@维他入我心 基于DYYY二次开发\n\n感谢开源", nil);
+                showAboutDialog(@"关于海螺助手", @"版本: v2.2.0", nil);
             };
             [aboutItems addObject:aboutItem];
             
