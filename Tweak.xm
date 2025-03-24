@@ -1049,7 +1049,7 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
             AWESettingItemModel *aboutItem = [[%c(AWESettingItemModel) alloc] init];
             aboutItem.identifier = @"DYYYAbout";
             aboutItem.title = @"关于插件";
-            aboutItem.detail = @"v2.1-7";
+            aboutItem.detail = @"v2.2-0";
             aboutItem.type = 0;
             aboutItem.iconImageName = @"awe-settings-icon-about";
             aboutItem.cellType = 26;
