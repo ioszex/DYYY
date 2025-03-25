@@ -2694,6 +2694,45 @@ static BOOL isDownloadFlied = NO;
 
 %end
 
+//
+%hook AWEFilterManager
+ 
+(id)filterAwemeModel:(id)model {
+ 
+NSNumber *DyTuxLikeFilter = NSUserDefaults standardUserDefaults objectForKey:@"DyTuxLikeFilter";
+ 
+if (DyTuxLikeFilter.integerValue > 0) {
+ 
+AWESearchAwemeExtraModel *searchExtraModel = model searchExtraModel;
+ 
+if (searchExtraModel) {
+ 
+return model;
+ 
+}
+ 
+AWEAwemeStatisticsModel *statistics = model statistics;
+ 
+if (statistics) {
+ 
+NSNumber *diggCount = statistics.diggCount;
+ 
+if (diggCount.integerValue < DyTuxLikeFilter.integerValue) {
+ 
+return nil;
+ 
+}
+ 
+}
+ 
+}
+ 
+return %orig; // 或者返回原方法的结果
+ 
+}
+ 
+%end
+
 %ctor {
     %init(DYYYSettingsGesture);
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"]) {
