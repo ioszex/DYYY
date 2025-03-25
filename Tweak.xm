@@ -1,6 +1,28 @@
 #import <UIKit/UIKit.h>
 #import <objc/runtime.h>
 #import "AwemeHeaders.h"
+#import <MobileCoreServices/MobileCoreServices.h>
+
+@class DYYYIconOptionsDialogView;
+static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSString *saveFilename, void (^onClear)(void), void (^onSelect)(void));
+
+// 添加UIImagePickerController代理类
+@interface DYYYImagePickerDelegate : NSObject <UIImagePickerControllerDelegate, UINavigationControllerDelegate>
+@property (nonatomic, copy) void (^completionBlock)(NSDictionary *info);
+@end
+
+@implementation DYYYImagePickerDelegate
+- (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info {
+    if (self.completionBlock) {
+        self.completionBlock(info);
+    }
+    [picker dismissViewControllerAnimated:YES completion:nil];
+}
+
+- (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
+    [picker dismissViewControllerAnimated:YES completion:nil];
+}
+@end
 
 @interface AWESettingBaseViewModel : NSObject
 @end
@@ -101,6 +123,7 @@ static UIViewController *topView(void) {
     }
     return rootVC;
 }
+
 
 // 自定义文本输入视图
 @interface DYYYCustomInputView : UIView <UITextFieldDelegate>
@@ -412,6 +435,130 @@ static UIViewController *topView(void) {
     return self;
 }
 
+static AWESettingItemModel *createIconCustomizationItem(NSString *identifier, NSString *title, NSString *svgIconName, NSString *saveFilename) {
+    AWESettingItemModel *item = [[%c(AWESettingItemModel) alloc] init];
+    item.identifier = identifier;
+    item.title = title;
+    
+    // 检查图片是否存在，使用saveFilename而非svgIconName来检查文件
+    NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+    NSString *dyyyFolderPath = [documentsPath stringByAppendingPathComponent:@"DYYY"];
+    NSString *imagePath = [dyyyFolderPath stringByAppendingPathComponent:saveFilename];
+    
+    BOOL fileExists = [[NSFileManager defaultManager] fileExistsAtPath:imagePath];
+    item.detail = fileExists ? @"已设置" : @"默认";
+    
+    item.type = 0;
+    item.svgIconImageName = svgIconName; // 使用传入的SVG图标名称
+    item.cellType = 26;
+    item.colorStyle = 0;
+    item.isEnable = YES;
+    
+    // 其余代码保持不变
+    item.cellTappedBlock = ^{
+        // 创建文件夹（如果不存在）
+        if (![[NSFileManager defaultManager] fileExistsAtPath:dyyyFolderPath]) {
+            [[NSFileManager defaultManager] createDirectoryAtPath:dyyyFolderPath 
+                                     withIntermediateDirectories:YES 
+                                                      attributes:nil 
+                                                           error:nil];
+        }
+        
+        UIViewController *topVC = topView();
+        
+        // 加载预览图片(如果存在)
+        UIImage *previewImage = nil;
+        if (fileExists) {
+            previewImage = [UIImage imageWithContentsOfFile:imagePath];
+        }
+        
+        // 显示选项对话框 - 使用saveFilename作为参数传递
+        showIconOptionsDialog(title, previewImage, saveFilename, ^{
+            // 清除按钮回调
+            if ([[NSFileManager defaultManager] fileExistsAtPath:imagePath]) {
+                NSError *error = nil;
+                [[NSFileManager defaultManager] removeItemAtPath:imagePath error:&error];
+                if (!error) {
+                    item.detail = @"默认";
+                    
+                    // 刷新表格视图
+                    if ([topVC isKindOfClass:%c(AWESettingBaseViewController)]) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            UITableView *tableView = nil;
+                            for (UIView *subview in topVC.view.subviews) {
+                                if ([subview isKindOfClass:[UITableView class]]) {
+                                    tableView = (UITableView *)subview;
+                                    break;
+                                }
+                            }
+                            
+                            if (tableView) {
+                                [tableView reloadData];
+                            }
+                        });
+                    }
+                }
+            }
+        }, ^{
+           // 选择按钮回调 - 打开图片选择器
+            UIImagePickerController *picker = [[UIImagePickerController alloc] init];
+            picker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+            picker.allowsEditing = NO;
+            picker.mediaTypes = @[@"public.image"];  // 使用字符串替代kUTTypeImage
+            
+            // 创建并设置代理
+            DYYYImagePickerDelegate *pickerDelegate = [[DYYYImagePickerDelegate alloc] init];
+            pickerDelegate.completionBlock = ^(NSDictionary *info) {
+                UIImage *selectedImage = info[UIImagePickerControllerOriginalImage];
+                if (selectedImage) {
+                    // 确保路径存在
+                    NSString *documentsPath = [NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES) firstObject];
+                    NSString *dyyyFolderPath = [documentsPath stringByAppendingPathComponent:@"DYYY"];
+                    NSString *imagePath = [dyyyFolderPath stringByAppendingPathComponent:saveFilename];
+                    
+                    // 保存图片
+                    NSData *imageData = UIImagePNGRepresentation(selectedImage);
+                    BOOL success = [imageData writeToFile:imagePath atomically:YES];
+                    
+                    if (success) {
+                        // 更新UI
+                        item.detail = @"已设置";
+                        
+                        // 确保在主线程刷新UI
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            // 刷新表格视图
+                            if ([topVC isKindOfClass:%c(AWESettingBaseViewController)]) {
+                                UITableView *tableView = nil;
+                                for (UIView *subview in topVC.view.subviews) {
+                                    if ([subview isKindOfClass:[UITableView class]]) {
+                                        tableView = (UITableView *)subview;
+                                        break;
+                                    }
+                                }
+                                
+                                if (tableView) {
+                                    [tableView reloadData];
+                                }
+                            }
+                        });
+                    }
+                }
+            };
+            
+            // 使用一个静态变量的地址作为关联对象的键
+            static char kDYYYPickerDelegateKey;
+            
+            picker.delegate = pickerDelegate;
+            // 正确设置关联对象
+            objc_setAssociatedObject(picker, &kDYYYPickerDelegateKey, pickerDelegate, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+            
+            [topVC presentViewController:picker animated:YES completion:nil];
+        });
+    };
+    
+    return item;
+}
+
 - (void)show {
     UIWindow *window = [UIApplication sharedApplication].keyWindow;
     [window addSubview:self];
@@ -446,21 +593,22 @@ static UIViewController *topView(void) {
 
 @end
 
+
 // 添加一个自定义关于弹窗类
 @interface DYYYAboutDialogView : UIView
 @property (nonatomic, strong) UIVisualEffectView *blurView;
 @property (nonatomic, strong) UIView *contentView;
 @property (nonatomic, strong) UILabel *titleLabel;
-@property (nonatomic, strong) UILabel *messageLabel;
+@property (nonatomic, strong) UITextView *messageTextView; // 将 UILabel 改为 UITextView
 @property (nonatomic, strong) UIButton *confirmButton;
 @property (nonatomic, copy) void (^onConfirm)(void);
 - (instancetype)initWithTitle:(NSString *)title message:(NSString *)message;
 - (void)show;
 - (void)dismiss;
+- (void)confirmTapped;
 @end
 
 @implementation DYYYAboutDialogView
-
 - (instancetype)initWithTitle:(NSString *)title message:(NSString *)message {
     if (self = [super initWithFrame:UIScreen.mainScreen.bounds]) {
         self.backgroundColor = [UIColor colorWithWhite:0 alpha:0.4];
@@ -471,8 +619,8 @@ static UIViewController *topView(void) {
         self.blurView.alpha = 0.7;
         [self addSubview:self.blurView];
         
-        // 创建内容视图 - 使用纯白背景，增加高度以显示更多内容
-        self.contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 300, 250)];
+        // 创建内容视图 - 使用纯白背景，增加高度到320以显示更多内容
+        self.contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 300, 320)];
         self.contentView.center = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
         self.contentView.backgroundColor = [UIColor whiteColor];
         self.contentView.layer.cornerRadius = 12;
@@ -489,23 +637,52 @@ static UIViewController *topView(void) {
         self.titleLabel.font = [UIFont systemFontOfSize:18 weight:UIFontWeightMedium];
         [self.contentView addSubview:self.titleLabel];
         
-        // 消息内容 - 颜色使用 #7c7c82，增加高度以显示更多内容
-        self.messageLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 54, 260, 140)];
-        self.messageLabel.text = message;
-        self.messageLabel.textColor = [UIColor colorWithRed:124/255.0 green:124/255.0 blue:130/255.0 alpha:1.0]; // #7c7c82
-        self.messageLabel.textAlignment = NSTextAlignmentCenter;
-        self.messageLabel.font = [UIFont systemFontOfSize:15];
-        self.messageLabel.numberOfLines = 0;
-        [self.contentView addSubview:self.messageLabel];
+        // 消息内容 - 使用 UITextView 代替 UILabel 以支持链接点击
+        self.messageTextView = [[UITextView alloc] initWithFrame:CGRectMake(20, 54, 260, 210)];
+        self.messageTextView.backgroundColor = [UIColor clearColor];
+        self.messageTextView.textAlignment = NSTextAlignmentCenter;
+        self.messageTextView.font = [UIFont systemFontOfSize:15];
+        self.messageTextView.editable = NO;
+        self.messageTextView.scrollEnabled = NO;
+        self.messageTextView.dataDetectorTypes = UIDataDetectorTypeLink;
+        self.messageTextView.selectable = YES;
+        
+        // 创建带链接的富文本
+        NSMutableAttributedString *attributedString = [[NSMutableAttributedString alloc] initWithString:message];
+        
+        // 设置整体颜色为 #7c7c82
+        [attributedString addAttribute:NSForegroundColorAttributeName 
+                                 value:[UIColor colorWithRed:124/255.0 green:124/255.0 blue:130/255.0 alpha:1.0] 
+                                 range:NSMakeRange(0, message.length)];
+        
+        // 查找并设置 Telegram 链接
+        NSRange telegramRange = [message rangeOfString:@"Telegram@vita_app"];
+        if (telegramRange.location != NSNotFound) {
+            [attributedString addAttribute:NSLinkAttributeName 
+                                     value:@"https://t.me/vita_app" 
+                                     range:telegramRange];
+        }
+        
+        // 查找并设置 GitHub 链接
+        NSRange githubRange = [message rangeOfString:@"github.com/Wtrwx/DYYY"];
+        if (githubRange.location != NSNotFound) {
+            [attributedString addAttribute:NSLinkAttributeName 
+                                     value:@"https://github.com/Wtrwx/DYYY" 
+                                     range:githubRange];
+        }
+        
+        self.messageTextView.attributedText = attributedString;
+        self.messageTextView.tintColor = [UIColor colorWithRed:11/255.0 green:223/255.0 blue:154/255.0 alpha:1.0]; // 链接点击颜色 #0BDF9A
+        [self.contentView addSubview:self.messageTextView];
         
         // 添加内容和按钮之间的分割线，调整位置
-        UIView *contentButtonSeparator = [[UIView alloc] initWithFrame:CGRectMake(0, 194, 300, 0.5)];
+        UIView *contentButtonSeparator = [[UIView alloc] initWithFrame:CGRectMake(0, 264, 300, 0.5)];
         contentButtonSeparator.backgroundColor = [UIColor colorWithRed:230/255.0 green:230/255.0 blue:230/255.0 alpha:1.0];
         [self.contentView addSubview:contentButtonSeparator];
         
         // 确认按钮 - 颜色使用 #2d2f38，无背景色，调整位置
         self.confirmButton = [UIButton buttonWithType:UIButtonTypeSystem];
-        self.confirmButton.frame = CGRectMake(0, 194.5, 300, 55.5);
+        self.confirmButton.frame = CGRectMake(0, 264.5, 300, 55.5);
         self.confirmButton.backgroundColor = [UIColor clearColor];
         [self.confirmButton setTitle:@"确定" forState:UIControlStateNormal];
         [self.confirmButton setTitleColor:[UIColor colorWithRed:45/255.0 green:47/255.0 blue:56/255.0 alpha:1.0] forState:UIControlStateNormal]; // #2d2f38
@@ -541,7 +718,6 @@ static UIViewController *topView(void) {
     }
     [self dismiss];
 }
-
 @end
 
 // 显示自定义关于弹窗
@@ -658,9 +834,9 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
         AWESettingItemModel *dyyyItem = [[%c(AWESettingItemModel) alloc] init];
         dyyyItem.identifier = @"DYYY";
         dyyyItem.title = @"DYYY";
-        dyyyItem.detail = @"v2.1-7";
+        dyyyItem.detail = @"v2.2-2";
         dyyyItem.type = 0;
-        dyyyItem.iconImageName = @"noticesettting_like";
+        dyyyItem.svgIconImageName = @"ic_sapling_outlined";
         dyyyItem.cellType = 26;
         dyyyItem.colorStyle = 2;
         dyyyItem.isEnable = YES;
@@ -709,8 +885,8 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 // 【外观设置】分类
                 NSMutableArray<AWESettingItemModel *> *appearanceItems = [NSMutableArray array];
                 NSArray *appearanceSettings = @[
-                    @{@"identifier": @"DYYYEnableDanmuColor", @"title": @"启用弹幕改色", @"detail": @"", @"cellType": @6, @"imageName": @"ic_bubbletwo_outlined_20"},
-                    @{@"identifier": @"DYYYdanmuColor", @"title": @"自定弹幕颜色", @"detail": @"十六进制", @"cellType": @26, @"imageName": @"ic_bubbletwo_filled_20"},
+                    @{@"identifier": @"DYYYEnableDanmuColor", @"title": @"启用弹幕改色", @"detail": @"", @"cellType": @6, @"imageName": @"ic_dansquare_outlined_20"},
+                    @{@"identifier": @"DYYYdanmuColor", @"title": @"自定弹幕颜色", @"detail": @"十六进制", @"cellType": @26, @"imageName": @"ic_dansquarenut_outlined_20"},
                     @{@"identifier": @"DYYYLabelColor", @"title": @"时间标签颜色", @"detail": @"十六进制", @"cellType": @26, @"imageName": @"ic_clock_outlined_20"},
                ];
                 
@@ -725,7 +901,7 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                     @{@"identifier": @"DYYYisShowScheduleDisplay", @"title": @"显示进度时长", @"detail": @"", @"cellType": @6, @"imageName": @"ic_playertime_outlined_20"},
                     @{@"identifier": @"DYYYTimelineVerticalPosition", @"title": @"时长纵轴位置", @"detail": @"-12.5", @"cellType": @26, @"imageName": @"ic_playertime_outlined_20"},
                     @{@"identifier": @"DYYYHideVideoProgress", @"title": @"隐藏视频进度", @"detail": @"", @"cellType": @6, @"imageName": @"ic_playertime_outlined_20"},
-                    @{@"identifier": @"DYYYisEnableAutoPlay", @"title": @"启用自动播放", @"detail": @"", @"cellType": @6, @"imageName": @"ic_play_filled_20"},
+                    @{@"identifier": @"DYYYisEnableAutoPlay", @"title": @"启用自动播放", @"detail": @"", @"cellType": @6, @"imageName": @"ic_play_outlined_12"},
                     @{@"identifier": @"DYYYDefaultSpeed", @"title": @"设置默认倍速", @"detail": @"", @"cellType": @26, @"imageName": @"ic_speed_outlined_20"},
                     @{@"identifier": @"DYYYisEnableArea", @"title": @"时间属地显示", @"detail": @"", @"cellType": @6, @"imageName": @"ic_location_outlined_20"}
                 ];
@@ -785,7 +961,7 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 // 【过滤与屏蔽】分类
                 NSMutableArray<AWESettingItemModel *> *filterItems = [NSMutableArray array];
                 NSArray *filterSettings = @[
-                    @{@"identifier": @"DYYYisSkipLive", @"title": @"启用过滤直播", @"detail": @"", @"cellType": @6, @"imageName": @"ic_livephoto_outlined_20"},
+                    @{@"identifier": @"DYYYisSkipLive", @"title": @"启用过滤直播", @"detail": @"", @"cellType": @6, @"imageName": @"ic_video_outlined_20"},
                     @{@"identifier": @"DYYYNoAds", @"title": @"启用屏蔽广告", @"detail": @"", @"cellType": @6, @"imageName": @"ic_ad_outlined_20"},
                 ];
                 
@@ -838,7 +1014,8 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 NSArray *transparencySettings = @[
                     @{@"identifier": @"DYYYtopbartransparent", @"title": @"设置顶栏透明", @"detail": @"0-1小数", @"cellType": @26, @"imageName": @"ic_module_outlined_20"},
                     @{@"identifier": @"DYYYGlobalTransparency", @"title": @"设置全局透明", @"detail": @"0-1小数", @"cellType": @26, @"imageName": @"ic_eye_outlined_20"},
-                    @{@"identifier": @"DYYYisEnableCommentBlur", @"title": @"评论区毛玻璃", @"detail": @"", @"cellType": @6, @"imageName": @"ic_comment_outlined_20"}
+                    @{@"identifier": @"DYYYisEnableCommentBlur", @"title": @"评论区毛玻璃", @"detail": @"", @"cellType": @6, @"imageName": @"ic_comment_outlined_20"}, 
+                    @{@"identifier": @"DYYYCommentBlurTransparent", @"title": @"毛玻璃透明度", @"detail": @"0-1小数", @"cellType": @26, @"imageName": @"ic_eye_outlined_20"}      
                 ];
                 
                 for (NSDictionary *dict in transparencySettings) {
@@ -851,6 +1028,9 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 NSArray *scaleSettings = @[
                     @{@"identifier": @"DYYYElementScale", @"title": @"右侧栏缩放度", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_zoomin_outlined_20"},
                     @{@"identifier": @"DYYYNicknameScale", @"title": @"昵称文案缩放", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_zoomin_outlined_20"},
+                    @{@"identifier": @"DYYYNicknameVerticalOffset", @"title": @"昵称下移距离", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_pensketch_outlined_20"},
+                    @{@"identifier": @"DYYYDescriptionVerticalOffset", @"title": @"文案下移距离", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_pensketch_outlined_20"},
+                    @{@"identifier": @"DYYYIPLeftShiftFactor", @"title": @"属地左移系数", @"detail": @"2.84", @"cellType": @26, @"imageName": @"ic_pensketch_outlined_20"},
                 ];
                 
                 for (NSDictionary *dict in scaleSettings) {
@@ -861,7 +1041,7 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 // 【标题自定义】分类
                 NSMutableArray<AWESettingItemModel *> *titleItems = [NSMutableArray array];
                 NSArray *titleSettings = @[
-                    @{@"identifier": @"DYYYIndexTitle", @"title": @"设置首页标题", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_docpen_filled"},
+                    @{@"identifier": @"DYYYIndexTitle", @"title": @"设置首页标题", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_horizontalbook_outlined_20"},
                     @{@"identifier": @"DYYYFriendsTitle", @"title": @"设置朋友标题", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_usertwo_outlined_20"},
                     @{@"identifier": @"DYYYMsgTitle", @"title": @"设置消息标题", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_msg_outlined_20"},
                     @{@"identifier": @"DYYYSelfTitle", @"title": @"设置我的标题", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_user_outlined_20"},
@@ -871,17 +1051,31 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                     AWESettingItemModel *item = [self createSettingItem:dict cellTapHandlers:cellTapHandlers];
                     [titleItems addObject:item];
                 }
+
+                // 【图标自定义】分类
+                NSMutableArray<AWESettingItemModel *> *iconItems = [NSMutableArray array];
                 
-                // 创建并组织所有section
+                // 添加图标自定义项
+                [iconItems addObject:createIconCustomizationItem(@"DYYYIconLikeBefore", @"未点赞图标", @"ic_heart_outlined_20", @"like_before.png")];
+                [iconItems addObject:createIconCustomizationItem(@"DYYYIconLikeAfter", @"已点赞图标", @"ic_heart_filled_20", @"like_after.png")];
+                [iconItems addObject:createIconCustomizationItem(@"DYYYIconComment", @"评论图标", @"ic_comment_outlined_20", @"comment.png")];
+                [iconItems addObject:createIconCustomizationItem(@"DYYYIconUnfavorite", @"未收藏图标", @"ic_star_outlined_20", @"unfavorite.png")];
+                [iconItems addObject:createIconCustomizationItem(@"DYYYIconFavorite", @"已收藏图标", @"ic_star_filled_20", @"favorite.png")];
+                [iconItems addObject:createIconCustomizationItem(@"DYYYIconShare", @"分享图标", @"ic_share_outlined", @"share.png")];
+                                
+                // 将图标自定义section添加到sections数组
+                
                 NSMutableArray *sections = [NSMutableArray array];
                 [sections addObject:createSection(@"透明度设置", transparencyItems)];
                 [sections addObject:createSection(@"缩放与大小", scaleItems)];
                 [sections addObject:createSection(@"标题自定义", titleItems)];
-                
+                [sections addObject:createSection(@"图标自定义", iconItems)];
+                // 创建并组织所有section
                 // 创建并推入二级设置页面
                 AWESettingBaseViewController *subVC = createSubSettingsViewController(@"界面设置", sections);
                 [rootVC.navigationController pushViewController:(UIViewController *)subVC animated:YES];
             };
+
             [mainItems addObject:uiSettingItem];
             
             // 创建隐藏设置分类项
@@ -915,6 +1109,7 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 // 【视频播放界面】分类
                 NSMutableArray<AWESettingItemModel *> *videoUiItems = [NSMutableArray array];
                 NSArray *videoUiSettings = @[
+                    @{@"identifier": @"DYYYHideLOTAnimationView", @"title": @"隐藏头像加号", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideLikeButton", @"title": @"隐藏点赞按钮", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideCommentButton", @"title": @"隐藏评论按钮", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideCollectButton", @"title": @"隐藏收藏按钮", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
@@ -929,29 +1124,40 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                     [videoUiItems addObject:item];
                 }
                 
-                // 【侧边栏与附加元素】分类
+                // 【侧边栏与消息页】分类
                 NSMutableArray<AWESettingItemModel *> *sidebarItems = [NSMutableArray array];
                 NSArray *sidebarSettings = @[
                     @{@"identifier": @"DYYYisHiddenSidebarDot", @"title": @"隐藏侧栏红点", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYisHiddenLeftSideBar", @"title": @"隐藏左侧边栏", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHidePushBanner", @"title": @"隐藏通知提示", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYisHiddenAvatarList", @"title": @"隐藏头像列表", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
-                    @{@"identifier": @"DYYYHidenqipo", @"title": @"隐藏头像气泡", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"}
+                    @{@"identifier": @"DYYYisHiddenAvatarBubble", @"title": @"隐藏头像气泡", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"}
                 ];
                 
                 for (NSDictionary *dict in sidebarSettings) {
                     AWESettingItemModel *item = [self createSettingItem:dict];
                     [sidebarItems addObject:item];
                 }
-                
+
                 // 【提示与位置信息】分类
                 NSMutableArray<AWESettingItemModel *> *infoItems = [NSMutableArray array];
                 NSArray *infoSettings = @[
+                    @{@"identifier": @"DYYYHideCapsuleView", @"title": @"隐藏吃喝玩乐", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideDiscover", @"title": @"隐藏右上搜索", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideInteractionSearch", @"title": @"隐藏相关搜索", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideDanmuButton", @"title": @"隐藏弹幕按钮", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideCancelMute", @"title": @"隐藏静音按钮", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideLocation", @"title": @"隐藏视频定位", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideQuqishuiting", @"title": @"隐藏去汽水听", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideGongChuang", @"title": @"隐藏共创头像", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideHotspot", @"title": @"隐藏热点提示", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideRecommendTips", @"title": @"隐藏推荐提示", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideShareContentView", @"title": @"隐藏分享提示", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideAntiAddictedNotice", @"title": @"隐藏作者声明", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideFeedAnchorContainer", @"title": @"隐藏拍摄同款", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideChallengeStickers", @"title": @"隐藏挑战贴纸", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideTemplateTags", @"title": @"隐藏校园提示", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideHisShop", @"title": @"隐藏作者店铺", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHidenCapsuleView", @"title": @"隐藏关注直播", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHidentopbarprompt", @"title": @"隐藏顶栏横线", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"}
                 ];
@@ -1073,7 +1279,8 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 // 【交互增强】分类
                 NSMutableArray<AWESettingItemModel *> *interactionItems = [NSMutableArray array];
                 NSArray *interactionSettings = @[
-                    @{@"identifier": @"DYYYEnableDoubleOpenComment", @"title": @"启用双击打开评论", @"detail": @"", @"cellType": @6, @"imageName": @"ic_comment_outlined_20"}
+                    @{@"identifier": @"DYYYEnableDoubleOpenComment", @"title": @"启用双击打开评论", @"detail": @"", @"cellType": @6, @"imageName": @"ic_comment_outlined_20"},
+                    @{@"identifier": @"DYYYEnableDoubleOpenAlertController", @"title": @"启用双击打开菜单", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xiaoxihuazhonghua_outlined_20"}
                 ];
                 
                 for (NSDictionary *dict in interactionSettings) {
@@ -1104,14 +1311,20 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
             AWESettingItemModel *aboutItem = [[%c(AWESettingItemModel) alloc] init];
             aboutItem.identifier = @"DYYYAbout";
             aboutItem.title = @"关于插件";
-            aboutItem.detail = @"v2.1-7";
+            aboutItem.detail = @"v2.2-2";
             aboutItem.type = 0;
             aboutItem.iconImageName = @"awe-settings-icon-about";
             aboutItem.cellType = 26;
             aboutItem.colorStyle = 0;
             aboutItem.isEnable = YES;
             aboutItem.cellTappedBlock = ^{
-                showAboutDialog(@"关于DYYY", @"版本: v2.1-7\n\n感谢使用DYYY\n\n@维他入我心 基于DYYY二次开发\n\n感谢开源", nil);
+                showAboutDialog(@"关于DYYY", 
+                    @"版本: v2.2-2\n\n"
+                    @"感谢使用DYYY\n\n"
+                    @"@维他入我心 基于DYYY二次开发\n\n"
+                    @"Telegram@vita_app\n\n"
+                    @"github.com/Wtrwx/DYYY\n\n" 
+                    @"感谢Huami开源", nil);
             };
             [aboutItems addObject:aboutItem];
             
@@ -1202,5 +1415,158 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
     
     return item;
 }
+
+// 添加一个新的双按钮弹窗类，用于图标自定义操作
+@interface DYYYIconOptionsDialogView : UIView
+@property (nonatomic, strong) UIVisualEffectView *blurView;
+@property (nonatomic, strong) UIView *contentView;
+@property (nonatomic, strong) UILabel *titleLabel;
+@property (nonatomic, strong) UIImageView *previewImageView;
+@property (nonatomic, strong) UIButton *clearButton;
+@property (nonatomic, strong) UIButton *selectButton;
+@property (nonatomic, copy) void (^onClear)(void);
+@property (nonatomic, copy) void (^onSelect)(void);
+- (instancetype)initWithTitle:(NSString *)title previewImage:(UIImage *)image;
+- (void)show;
+- (void)dismiss;
+@end
+
+@implementation DYYYIconOptionsDialogView
+
+- (instancetype)initWithTitle:(NSString *)title previewImage:(UIImage *)image {
+    if (self = [super initWithFrame:UIScreen.mainScreen.bounds]) {
+        self.backgroundColor = [UIColor colorWithWhite:0 alpha:0.4];
+        
+        // 创建模糊效果视图
+        self.blurView = [[UIVisualEffectView alloc] initWithEffect:[UIBlurEffect effectWithStyle:UIBlurEffectStyleDark]];
+        self.blurView.frame = self.bounds;
+        self.blurView.alpha = 0.7;
+        [self addSubview:self.blurView];
+        
+        // 创建内容视图 - 使用纯白背景
+        CGFloat contentHeight = image ? 300 : 200; // 如果有图片预览则增加高度
+        self.contentView = [[UIView alloc] initWithFrame:CGRectMake(0, 0, 300, contentHeight)];
+        self.contentView.center = CGPointMake(self.frame.size.width / 2, self.frame.size.height / 2);
+        self.contentView.backgroundColor = [UIColor whiteColor];
+        self.contentView.layer.cornerRadius = 12;
+        self.contentView.layer.masksToBounds = YES;
+        self.contentView.alpha = 0;
+        self.contentView.transform = CGAffineTransformMakeScale(0.8, 0.8);
+        [self addSubview:self.contentView];
+        
+        // 标题 - 颜色使用 #2d2f38
+        self.titleLabel = [[UILabel alloc] initWithFrame:CGRectMake(20, 20, 260, 24)];
+        self.titleLabel.text = title;
+        self.titleLabel.textColor = [UIColor colorWithRed:45/255.0 green:47/255.0 blue:56/255.0 alpha:1.0]; // #2d2f38
+        self.titleLabel.textAlignment = NSTextAlignmentCenter;
+        self.titleLabel.font = [UIFont systemFontOfSize:18 weight:UIFontWeightMedium];
+        [self.contentView addSubview:self.titleLabel];
+        
+        // 如果有图片，添加预览
+        CGFloat buttonStartY = 54;
+        if (image) {
+            CGFloat imageViewSize = 120;
+            self.previewImageView = [[UIImageView alloc] initWithFrame:CGRectMake((300 - imageViewSize) / 2, 54, imageViewSize, imageViewSize)];
+            self.previewImageView.contentMode = UIViewContentModeScaleAspectFit;
+            self.previewImageView.image = image;
+            self.previewImageView.layer.cornerRadius = 8;
+            self.previewImageView.layer.borderColor = [UIColor colorWithRed:230/255.0 green:230/255.0 blue:230/255.0 alpha:1.0].CGColor;
+            self.previewImageView.layer.borderWidth = 0.5;
+            self.previewImageView.clipsToBounds = YES;
+            [self.contentView addSubview:self.previewImageView];
+            buttonStartY = 184; // 调整按钮位置
+        }
+        
+        // 添加内容和按钮之间的分割线
+        UIView *contentButtonSeparator = [[UIView alloc] initWithFrame:CGRectMake(0, contentHeight - 55.5, 300, 0.5)];
+        contentButtonSeparator.backgroundColor = [UIColor colorWithRed:230/255.0 green:230/255.0 blue:230/255.0 alpha:1.0];
+        [self.contentView addSubview:contentButtonSeparator];
+        
+        // 按钮容器
+        UIView *buttonContainer = [[UIView alloc] initWithFrame:CGRectMake(0, contentHeight - 55, 300, 55)];
+        [self.contentView addSubview:buttonContainer];
+        
+        // 清除按钮 - 颜色使用 #7c7c82
+        self.clearButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        self.clearButton.frame = CGRectMake(0, 0, 149.5, 55);
+        self.clearButton.backgroundColor = [UIColor clearColor];
+        [self.clearButton setTitle:@"清除" forState:UIControlStateNormal];
+        [self.clearButton setTitleColor:[UIColor colorWithRed:124/255.0 green:124/255.0 blue:130/255.0 alpha:1.0] forState:UIControlStateNormal]; // #7c7c82
+        [self.clearButton addTarget:self action:@selector(clearButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+        [buttonContainer addSubview:self.clearButton];
+        
+        // 按钮之间的分割线
+        UIView *buttonSeparator = [[UIView alloc] initWithFrame:CGRectMake(149.5, 0, 0.5, 55)];
+        buttonSeparator.backgroundColor = [UIColor colorWithRed:230/255.0 green:230/255.0 blue:230/255.0 alpha:1.0];
+        [buttonContainer addSubview:buttonSeparator];
+        
+        // 选择按钮 - 颜色使用 #2d2f38
+        self.selectButton = [UIButton buttonWithType:UIButtonTypeSystem];
+        self.selectButton.frame = CGRectMake(150, 0, 150, 55);
+        self.selectButton.backgroundColor = [UIColor clearColor];
+        [self.selectButton setTitle:@"选择" forState:UIControlStateNormal];
+        [self.selectButton setTitleColor:[UIColor colorWithRed:45/255.0 green:47/255.0 blue:56/255.0 alpha:1.0] forState:UIControlStateNormal]; // #2d2f38
+        [self.selectButton addTarget:self action:@selector(selectButtonTapped) forControlEvents:UIControlEventTouchUpInside];
+        [buttonContainer addSubview:self.selectButton];
+        
+        // 添加点击空白处关闭的手势
+        UITapGestureRecognizer *tapGesture = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleBackgroundTap:)];
+        [self addGestureRecognizer:tapGesture];
+    }
+    return self;
+}
+
+// 处理背景点击事件
+- (void)handleBackgroundTap:(UITapGestureRecognizer *)gesture {
+    CGPoint location = [gesture locationInView:self];
+    if (!CGRectContainsPoint(self.contentView.frame, location)) {
+        [self dismiss];
+    }
+}
+
+- (void)show {
+    UIWindow *window = [UIApplication sharedApplication].keyWindow;
+    [window addSubview:self];
+    
+    [UIView animateWithDuration:0.25 animations:^{
+        self.contentView.alpha = 1.0;
+        self.contentView.transform = CGAffineTransformIdentity;
+    }];
+}
+
+- (void)dismiss {
+    [UIView animateWithDuration:0.2 animations:^{
+        self.contentView.alpha = 0;
+        self.contentView.transform = CGAffineTransformMakeScale(0.8, 0.8);
+        self.blurView.alpha = 0;
+    } completion:^(BOOL finished) {
+        [self removeFromSuperview];
+    }];
+}
+
+- (void)clearButtonTapped {
+    if (self.onClear) {
+        self.onClear();
+    }
+    [self dismiss];
+}
+
+- (void)selectButtonTapped {
+    if (self.onSelect) {
+        self.onSelect();
+    }
+    [self dismiss];
+}
+
+@end
+
+// 显示图标选项弹窗
+static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSString *saveFilename, void (^onClear)(void), void (^onSelect)(void)) {
+    DYYYIconOptionsDialogView *optionsDialog = [[DYYYIconOptionsDialogView alloc] initWithTitle:title previewImage:previewImage];
+    optionsDialog.onClear = onClear;
+    optionsDialog.onSelect = onSelect;
+    [optionsDialog show];
+}
+
 %end
 
