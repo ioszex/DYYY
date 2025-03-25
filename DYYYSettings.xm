@@ -1201,7 +1201,8 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 @{@"identifier": @"DYYYHideGroupon", @"title": @"移除团购", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xmark_outlined_20"},
                 @{@"identifier": @"DYYYHideTabLive", @"title": @"移除直播", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xmark_outlined_20"},
                 @{@"identifier": @"DYYYHidePadHot", @"title": @"移除热点", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xmark_outlined_20"},
-                @{@"identifier": @"DYYYHideHangout", @"title": @"移除经验", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xmark_outlined_20"}
+                @{@"identifier": @"DYYYHideHangout", @"title": @"移除经验", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xmark_outlined_20"},
+                @{@"identifier": @"DYYYHidePlaylet", @"title": @"移除短剧", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xmark_outlined_20"}
             ];
             
             for (NSDictionary *dict in removeSettings) {
@@ -1228,7 +1229,6 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 [removeSettingsItems addObject:item];
             }
             
-            // 修复：创建section并组织到sections数组
             NSMutableArray *sections = [NSMutableArray array];
             [sections addObject:createSection(@"顶栏选项", removeSettingsItems)];
             
@@ -1280,11 +1280,44 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 NSMutableArray<AWESettingItemModel *> *interactionItems = [NSMutableArray array];
                 NSArray *interactionSettings = @[
                     @{@"identifier": @"DYYYEnableDoubleOpenComment", @"title": @"启用双击打开评论", @"detail": @"", @"cellType": @6, @"imageName": @"ic_comment_outlined_20"},
-                    @{@"identifier": @"DYYYEnableDoubleOpenAlertController", @"title": @"启用双击打开菜单", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xiaoxihuazhonghua_outlined_20"}
+                    @{@"identifier": @"DYYYEnableDoubleOpenAlertController", @"title": @"启用双击打开菜单", @"detail": @"", @"cellType": @26, @"imageName": @"ic_xiaoxihuazhonghua_outlined_20"}
                 ];
                 
                 for (NSDictionary *dict in interactionSettings) {
                     AWESettingItemModel *item = [self createSettingItem:dict];
+                    // 为双击菜单选项添加特殊处理
+                    if ([item.identifier isEqualToString:@"DYYYEnableDoubleOpenAlertController"]) {
+                        item.cellTappedBlock = ^{
+                            NSMutableArray<AWESettingItemModel *> *doubleTapItems = [NSMutableArray array];
+                            AWESettingItemModel *enableDoubleTapMenu = [self createSettingItem:@{
+                                @"identifier": @"DYYYEnableDoubleOpenAlertController", 
+                                @"title": @"启用双击打开菜单", 
+                                @"detail": @"", 
+                                @"cellType": @6, 
+                                @"imageName": @"ic_xiaoxihuazhonghua_outlined_20"
+                            }];
+                            [doubleTapItems addObject:enableDoubleTapMenu];
+                            
+                            NSArray *doubleTapFunctions = @[
+                                @{@"identifier": @"DYYYDoubleTapDownload", @"title": @"保存视频/图片", @"detail": @"", @"cellType": @6, @"imageName": @"ic_boxarrowdown_outlined"},
+                                @{@"identifier": @"DYYYDoubleTapDownloadAudio", @"title": @"保存音频", @"detail": @"", @"cellType": @6, @"imageName": @"ic_boxarrowdown_outlined"},
+                                @{@"identifier": @"DYYYDoubleTapCopyDesc", @"title": @"复制文案", @"detail": @"", @"cellType": @6, @"imageName": @"ic_rectangleonrectangleup_outlined_20"},
+                                @{@"identifier": @"DYYYDoubleTapComment", @"title": @"打开评论", @"detail": @"", @"cellType": @6, @"imageName": @"ic_comment_outlined_20"},
+                                @{@"identifier": @"DYYYDoubleTapLike", @"title": @"点赞视频", @"detail": @"", @"cellType": @6, @"imageName": @"ic_heart_outlined_20"},
+                            ];
+                            
+                            for (NSDictionary *dict in doubleTapFunctions) {
+                                AWESettingItemModel *functionItem = [self createSettingItem:dict];
+                                [doubleTapItems addObject:functionItem];
+                            }
+                            NSMutableArray *sections = [NSMutableArray array];
+                            [sections addObject:createSection(@"双击菜单设置", doubleTapItems)];
+                            UIViewController *rootVC = self.controllerDelegate;
+                            AWESettingBaseViewController *subVC = createSubSettingsViewController(@"双击菜单设置", sections);
+                            [rootVC.navigationController pushViewController:(UIViewController *)subVC animated:YES];
+                        };
+                    }
+                    
                     [interactionItems addObject:item];
                 }
                 
@@ -1293,11 +1326,11 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 [sections addObject:createSection(@"复制功能", copyItems)];
                 [sections addObject:createSection(@"媒体保存", downloadItems)];
                 [sections addObject:createSection(@"交互增强", interactionItems)];
-                
                 // 创建并推入二级设置页面
                 AWESettingBaseViewController *subVC = createSubSettingsViewController(@"增强设置", sections);
                 [rootVC.navigationController pushViewController:(UIViewController *)subVC animated:YES];
             };
+
             [mainItems addObject:enhanceSettingItem];
             
             // 创建关于分类（单独section）
