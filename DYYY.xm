@@ -1125,6 +1125,7 @@
 
     BOOL hideShop = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideShopButton"];
     BOOL hideMsg = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideMessageButton"];
+    BOOL hidew = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYwMessageButton"];
     BOOL hideFri = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideFriendsButton"];
     
     NSMutableArray *visibleButtons = [NSMutableArray array];
@@ -1140,6 +1141,9 @@
         if ([label isEqualToString:@"商城"]) {
             shouldHide = hideShop;
         } else if ([label containsString:@"消息"]) {
+//新增
+           shouldHide = hidew;
+        } else if ([label containsString:@"我"]) {
             shouldHide = hideMsg;
         } else if ([label containsString:@"朋友"]) {
             shouldHide = hideFri;
