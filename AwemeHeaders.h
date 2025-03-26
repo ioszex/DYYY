@@ -231,6 +231,9 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @interface AWEAwemeMusicInfoView : UIView
 @end
 
+@interface AWETemplatePlayletView : UIView
+@end
+
 @interface AFDRecommendToFriendEntranceLabel : UILabel
 @end
 
@@ -377,6 +380,11 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @end
 
 @interface AWEPlayDanmakuInputContainView : UIView
+@property (nonatomic, strong, readonly) UIView *superview;
+@property (nonatomic, assign, getter=isHidden) BOOL hidden;
+@end
+
+@interface AWEPlayInteractionRelatedVideoView : UIView
 @property (nonatomic, strong, readonly) UIView *superview;
 @property (nonatomic, assign, getter=isHidden) BOOL hidden;
 @end
