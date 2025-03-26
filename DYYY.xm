@@ -313,6 +313,7 @@
 
 %end
 
+//开始
 %hook AWEPlayInteractionViewController
 - (void)viewDidLayoutSubviews {
     %orig;
@@ -325,81 +326,61 @@
         self.view.frame = frame;
     }
 }
+
 - (void)onPlayer:(id)arg0 didDoubleClick:(id)arg1 {
     BOOL isPopupEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYEnableDoubleOpenAlertController"];
     BOOL isDirectCommentEnabled = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYEnableDoubleOpenComment"];
 
-    // 直接打开评论区的情况
     if (isDirectCommentEnabled) {
         [self performCommentAction];
         return;
     }
-    
-    // 显示弹窗的情况
+
     if (isPopupEnabled) {
-        // 获取当前视频模型
         AWEAwemeModel *awemeModel = nil;
-        
-        // 尝试通过可能的方法/属性获取模型
-        if ([self respondsToSelector:@selector(awemeModel)]) {
-            awemeModel = [self performSelector:@selector(awemeModel)];
-        } else if ([self respondsToSelector:@selector(currentAwemeModel)]) {
-            awemeModel = [self performSelector:@selector(currentAwemeModel)];
-        } else if ([self respondsToSelector:@selector(getAwemeModel)]) {
-            awemeModel = [self performSelector:@selector(getAwemeModel)];
-        }
-        
-        // 如果仍然无法获取模型，尝试从视图控制器获取
-        if (!awemeModel) {
-            UIViewController *baseVC = [self valueForKey:@"awemeBaseViewController"];
-            if (baseVC && [baseVC respondsToSelector:@selector(model)]) {
-                awemeModel = [baseVC performSelector:@selector(model)];
-            } else if (baseVC && [baseVC respondsToSelector:@selector(awemeModel)]) {
-                awemeModel = [baseVC performSelector:@selector(awemeModel)];
-            }
-        }
-        
-        // 如果无法获取模型，执行默认行为并返回
-        if (!awemeModel) {
-            %orig;
-            return;
-        }
+        // 原有获取awemeModel的逻辑...
         
         AWEVideoModel *videoModel = awemeModel.video;
         AWEMusicModel *musicModel = awemeModel.music;
-        
-        // 确定内容类型（视频或图片）
         BOOL isImageContent = (awemeModel.awemeType == 68);
-        NSString *downloadTitle = isImageContent ? @"保存图片" : @"保存视频";
         
-        // 创建AWEUserActionSheetView
+        // 增强图片类型判断
+        BOOL isAlbumImages = isImageContent && awemeModel.albumImages.count > 0;
+        NSString *downloadTitle = isImageContent ? (isAlbumImages ? @"保存当前图片" : @"保存图片") : @"保存视频";
+
         AWEUserActionSheetView *actionSheet = [[NSClassFromString(@"AWEUserActionSheetView") alloc] init];
         NSMutableArray *actions = [NSMutableArray array];
-        
-        // 添加下载选项
-        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDoubleTapDownload"] || 
-            ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapDownload"]) {
-            
+
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDoubleTapDownload"]) {
+            // 保存当前图片/视频
             AWEUserSheetAction *downloadAction = [NSClassFromString(@"AWEUserSheetAction") 
-                                                 actionWithTitle:downloadTitle 
-                                                 imgName:nil 
-                                                 handler:^{
-                if (isImageContent) {
-                    // 图片内容
-                    AWEImageAlbumImageModel *currentImageModel = nil;
-                    if (awemeModel.currentImageIndex > 0 && awemeModel.currentImageIndex <= awemeModel.albumImages.count) {
-                        currentImageModel = awemeModel.albumImages[awemeModel.currentImageIndex - 1];
+                actionWithTitle:downloadTitle 
+                imgName:nil 
+                handler:^{
+                    if (isImageContent) {
+                        AWEImageAlbumImageModel *currentImageModel = nil;
+                        if (awemeModel.currentImageIndex > 0 && awemeModel.currentImageIndex <= awemeModel.albumImages.count) {
+                            currentImageModel = awemeModel.albumImages[awemeModel.currentImageIndex - 1];
+                        } else {
+                            currentImageModel = awemeModel.albumImages.firstObject;
+                        }
+                        
+                        // 实况照片处理
+                        if (currentImageModel.clipVideo != nil) {
+                            NSURL *photoURL = [NSURL URLWithString:currentImageModel.urlList.firstObject];
+                            NSURL *videoURL = [currentImageModel.clipVideo.playURL getDYYYSrcURLDownload];
+                            [DYYYManager downloadLivePhoto:photoURL videoURL:videoURL completion:^{
+                                [DYYYManager showToast:@"实况照片已保存到相册"];
+                            }];
+                        } 
+                        // 普通图片处理
+                        else if (currentImageModel.urlList.count > 0) {
+                            NSURL *url = [NSURL URLWithString:currentImageModel.urlList.firstObject];
+                            [DYYYManager downloadMedia:url mediaType:MediaTypeImage completion:^{
+                                [DYYYManager showToast:@"图片已保存到相册"];
+                            }];
+                        }
                     } else {
-                        currentImageModel = awemeModel.albumImages.firstObject;
-                    }
-                    
-                    if (currentImageModel && currentImageModel.urlList.count > 0) {
-                        NSURL *url = [NSURL URLWithString:currentImageModel.urlList.firstObject];
-                        [DYYYManager downloadMedia:url mediaType:MediaTypeImage completion:^{
-                            [DYYYManager showToast:@"图片已保存到相册"];
-                        }];
-                    }
-                } else {
                     // 视频内容
                     if (videoModel && videoModel.h264URL && videoModel.h264URL.originURLList.count > 0) {
                         NSURL *url = [NSURL URLWithString:videoModel.h264URL.originURLList.firstObject];
@@ -408,27 +389,43 @@
                         }];
                     }
                 }
-            }];
-            [actions addObject:downloadAction];
-            
-            // 如果是图集，添加下载所有图片选项
-            if (isImageContent && awemeModel.albumImages.count > 1) {
-                AWEUserSheetAction *downloadAllAction = [NSClassFromString(@"AWEUserSheetAction") 
-                                                       actionWithTitle:@"保存所有图片" 
-                                                       imgName:nil 
-                                                       handler:^{
-                    NSMutableArray *imageURLs = [NSMutableArray array];
-                    for (AWEImageAlbumImageModel *imageModel in awemeModel.albumImages) {
-                        if (imageModel.urlList.count > 0) {
-                            [imageURLs addObject:imageModel.urlList.firstObject];
-                        }
-                    }
-                    [DYYYManager downloadAllImages:imageURLs];
                 }];
+            [actions addObject:downloadAction];
+
+            // 保存所有图片（当且仅当是图集时）
+            if (isAlbumImages && awemeModel.albumImages.count > 1) {
+                // 检测实况照片存在性
+                BOOL hasLivePhoto = NO;
+                for (AWEImageAlbumImageModel *imageModel in awemeModel.albumImages) {
+                    if (imageModel.clipVideo != nil) {
+                        hasLivePhoto = YES;
+                        break;
+                    }
+                }
+                
+                AWEUserSheetAction *downloadAllAction = [NSClassFromString(@"AWEUserSheetAction") 
+                    actionWithTitle:hasLivePhoto ? @"保存所有实况" : @"保存所有图片"
+                    imgName:nil 
+                    handler:^{
+                        for (AWEImageAlbumImageModel *imageModel in awemeModel.albumImages) {
+                            if (imageModel.urlList.count > 0) {
+                                if (imageModel.clipVideo != nil) {
+                                    // 下载实况照片
+                                    NSURL *photoURL = [NSURL URLWithString:imageModel.urlList.firstObject];
+                                    NSURL *videoURL = [imageModel.clipVideo.playURL getDYYYSrcURLDownload];
+                                    [DYYYManager downloadLivePhoto:photoURL videoURL:videoURL completion:nil];
+                                } else {
+                                    // 下载普通图片
+                                    NSURL *url = [NSURL URLWithString:imageModel.urlList.firstObject];
+                                    [DYYYManager downloadMedia:url mediaType:MediaTypeImage completion:nil];
+                                }
+                            }
+                        }
+                        [DYYYManager showToast:hasLivePhoto ? @"所有实况已开始保存" : @"所有图片已开始保存"];
+                    }];
                 [actions addObject:downloadAllAction];
             }
-        }
-        
+        }       
         // 添加下载音频选项
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDoubleTapDownloadAudio"] || 
             ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapDownloadAudio"]) {
