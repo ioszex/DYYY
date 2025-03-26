@@ -1138,13 +1138,15 @@
         NSString *label = subview.accessibilityLabel;
         BOOL shouldHide = NO;
         
+        
         if ([label isEqualToString:@"商城"]) {
             shouldHide = hideShop;
         } else if ([label containsString:@"消息"]) {
-//新增
-           shouldHide = hidew;
-        } else if ([label containsString:@"我"]) {
             shouldHide = hideMsg;
+
+        } else if ([label containsString:@"我"]) {
+            shouldHide = hidew;
+
         } else if ([label containsString:@"朋友"]) {
             shouldHide = hideFri;
         }
