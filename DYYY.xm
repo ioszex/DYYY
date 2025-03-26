@@ -2916,26 +2916,6 @@ static BOOL isDownloadFlied = NO;
 
 %end
 
-%hook AWEUserRelationView
-- (void)onFollowViewClicked:(UITapGestureRecognizer *)gesture {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYfollowpp"]) {
-        
-        dispatch_async(dispatch_get_main_queue(), ^{
-            [DYYYBottomAlertView showAlertWithTitle:@"关注确认" 
-                                           message:@"是否确认关注？" 
-                                       cancelAction:nil 
-                                       confirmAction:^{
-                %orig(gesture);
-            }];
-        });
-    } else {
-        %orig;
-    }
-}
-
-
-%end
-
 %ctor {
     %init(DYYYSettingsGesture);
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"]) {
