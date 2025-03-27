@@ -2925,11 +2925,12 @@ static BOOL isDownloadFlied = NO;
         }
         self.hidden = YES;
         return; 
+     }
     }
-    %orig;
+    return %orig;
 }
-%end
 
+%end
 
 %ctor {
     %init(DYYYSettingsGesture);
