@@ -42,6 +42,24 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @property (retain, nonatomic) AWEVideoModel *clipVideo;
 @end
 
+@interface AWEAwemeStatisticsModel : NSObject
+@property (nonatomic, strong) NSNumber *diggCount;
+@end
+
+@interface AWESearchAwemeExtraModel : NSObject
+@end
+
+@interface AWEAwemeTextExtraModel : NSObject
+@property (nonatomic, copy) NSString *hashtagName;
+@property (nonatomic, copy) NSString *hashtagId;
+@property (nonatomic, copy) NSString *type;
+@property (nonatomic, assign) NSRange textRange;
+@property (nonatomic, copy) NSString *awemeId;
+@property (nonatomic, copy) NSString *userId;
+@property (nonatomic, copy) NSString *userUniqueId;
+@property (nonatomic, copy) NSString *secUid;
+@end
+
 @interface AWEAwemeModel : NSObject
 @property (nonatomic, assign,readwrite) CGFloat videoDuration;
 @property (nonatomic, strong) AWEVideoModel *video;
@@ -56,7 +74,17 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @property (nonatomic, assign) BOOL isAds;
 @property (nonatomic, assign) BOOL isLive;
 @property (nonatomic, strong) NSString *shareURL;
+@property (nonatomic, strong) id hotSpotLynxCardModel;
+@property (nonatomic, copy) NSString *liveReason;
+@property (nonatomic, strong) id shareRecExtra; // 推荐视频专有属性
+@property (nonatomic, strong) NSArray<AWEAwemeTextExtraModel *> *textExtras;
+@property (nonatomic, copy) NSString *itemTitle;
+@property (nonatomic, copy) NSString *descriptionSimpleString;
+@property (nonatomic, strong) NSString *itemID;
+
+@property (nonatomic, strong) AWEAwemeStatisticsModel *statistics;
 - (BOOL)isLive;
+- (AWESearchAwemeExtraModel *)searchExtraModel;
 @end
 
 @interface AWELongPressPanelBaseViewModel : NSObject
@@ -387,4 +415,24 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @interface AWEPlayInteractionRelatedVideoView : UIView
 @property (nonatomic, strong, readonly) UIView *superview;
 @property (nonatomic, assign, getter=isHidden) BOOL hidden;
+@end
+
+// AWEVersionUpdateManager相关接口声明
+@interface AWEVersionUpdateManager : NSObject
+@property (nonatomic, strong) id networkModule;
+@property (nonatomic, strong) id badgeModule;
+@property (nonatomic, strong) id workflow;
+- (NSString *)currentVersion;
+- (void)startVersionUpdateWorkflow:(id)arg1 completion:(id)arg2;
+- (void)workflowDidFinish:(id)arg1;
++ (id)sharedInstance;
+@end
+
+@interface AWEVersionUpdateNetworkModule : NSObject
+@end
+
+@interface AWEVersionUpdateBadgeModule : NSObject
+@end
+
+@interface AWEVersionUpdateWorkflow : NSObject
 @end

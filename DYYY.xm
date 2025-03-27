@@ -286,33 +286,6 @@
 }
 %end
 
-%hook AWEAwemeModel
-
-- (void)live_callInitWithDictyCategoryMethod:(id)arg1 {
-    if (self.currentAweme && [self.currentAweme isLive] && [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"]) {
-        return;
-    }
-    %orig;
-}
-
-+ (id)liveStreamURLJSONTransformer {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"] ? nil : %orig;
-}
-
-+ (id)relatedLiveJSONTransformer {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"] ? nil : %orig;
-}
-
-+ (id)rawModelFromLiveRoomModel:(id)arg1 {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"] ? nil : %orig;
-}
-
-+ (id)aweLiveRoom_subModelPropertyKey {
-    return [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"] ? nil : %orig;
-}
-
-%end
-
 %hook AWEPlayInteractionViewController
 - (void)viewDidLayoutSubviews {
     %orig;
@@ -445,6 +418,72 @@
             [actions addObject:downloadAudioAction];
         }
         
+
+        // 添加接口保存选项
+        if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDoubleInterfaceDownload"]) {
+            NSString *apiKey = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYInterfaceDownload"];
+            if (apiKey.length > 0) {
+                AWEUserSheetAction *apiDownloadAction = [NSClassFromString(@"AWEUserSheetAction") 
+                                                       actionWithTitle:@"接口保存" 
+                                                       imgName:nil 
+                                                       handler:^{
+                    NSString *shareLink = [awemeModel valueForKey:@"shareURL"];
+                    if (shareLink.length == 0) {
+                        [DYYYManager showToast:@"无法获取分享链接"];
+                        return;
+                    }
+                    
+                    // 拼接API请求URL
+                    NSString *apiUrl = [NSString stringWithFormat:@"%@%@", apiKey, [shareLink stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+                    
+                    [DYYYManager showToast:@"正在通过接口解析..."];
+                    
+                    NSURL *url = [NSURL URLWithString:apiUrl];
+                    NSURLRequest *request = [NSURLRequest requestWithURL:url];
+                    
+                    NSURLSession *session = [NSURLSession sharedSession];
+                    NSURLSessionDataTask *dataTask = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+                        dispatch_async(dispatch_get_main_queue(), ^{
+                            if (error) {
+                                [DYYYManager showToast:[NSString stringWithFormat:@"接口请求失败: %@", error.localizedDescription]];
+                                return;
+                            }
+                            
+                            NSError *jsonError;
+                            NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+                            
+                            if (jsonError) {
+                                [DYYYManager showToast:@"解析接口返回数据失败"];
+                                return;
+                            }
+                            
+                            NSInteger code = [json[@"code"] integerValue];
+                            if (code != 200) {
+                                [DYYYManager showToast:[NSString stringWithFormat:@"接口返回错误: %@", json[@"msg"] ?: @"未知错误"]];
+                                return;
+                            }
+                            
+                            NSDictionary *data = json[@"data"];
+                            NSString *videoUrl = data[@"video"] ?: data[@"video_url"] ?: data[@"url"];
+                            
+                            if (videoUrl.length == 0) {
+                                [DYYYManager showToast:@"接口未返回有效的视频链接"];
+                                return;
+                            }
+                            
+                            NSURL *videoDownloadUrl = [NSURL URLWithString:videoUrl];
+                            [DYYYManager downloadMedia:videoDownloadUrl mediaType:MediaTypeVideo completion:^{
+                                [DYYYManager showToast:@"视频已保存到相册"];
+                            }];
+                        });
+                    }];
+                    
+                    [dataTask resume];
+                }];
+                [actions addObject:apiDownloadAction];
+            }
+        }
+
         // 添加复制文案选项
         if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYDoubleTapCopyDesc"] || 
             ![[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYDoubleTapCopyDesc"]) {
@@ -750,24 +789,149 @@
 %end
 
 %hook AWEAwemeModel
-
 - (id)initWithDictionary:(id)arg1 error:(id *)arg2 {
     id orig = %orig;
+    
     BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
-    return (noAds && self.isAds) ? nil : orig;
+    BOOL skipLive = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"];
+    BOOL skipHotSpot = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipHotSpot"];
+    
+    BOOL shouldFilterAds = noAds && (self.hotSpotLynxCardModel || self.isAds);
+    BOOL shouldFilterRec = skipLive && [self.liveReason isEqualToString:@"rec"];
+    BOOL shouldFilterHotSpot = skipHotSpot && self.hotSpotLynxCardModel;
+
+    BOOL shouldFilterLowLikes = NO;
+    BOOL shouldFilterKeywords = NO;
+    
+    // 获取用户设置的需要过滤的关键词
+    NSString *filterKeywords = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYfilterKeywords"];
+    NSArray *keywordsList = nil;
+    
+    if (filterKeywords.length > 0) {
+        keywordsList = [filterKeywords componentsSeparatedByString:@","];
+    }
+
+    NSInteger filterLowLikesThreshold = [[NSUserDefaults standardUserDefaults] integerForKey:@"DYYYfilterLowLikes"];
+        
+    // 只有当shareRecExtra不为空时才过滤点赞量低的视频和关键词
+    if (self.shareRecExtra && ![self.shareRecExtra isEqual:@""]) {
+        // 过滤低点赞量视频
+        if (filterLowLikesThreshold > 0) {
+            AWESearchAwemeExtraModel *searchExtraModel = [self searchExtraModel];
+            if (!searchExtraModel) {
+                AWEAwemeStatisticsModel *statistics = self.statistics;
+                if (statistics && statistics.diggCount) {
+                    shouldFilterLowLikes = statistics.diggCount.integerValue < filterLowLikesThreshold;
+                }
+            }
+        }
+        
+        // 过滤包含特定关键词的视频
+        if (keywordsList.count > 0) {
+            // 检查视频标题
+            if (self.itemTitle.length > 0) {
+                for (NSString *keyword in keywordsList) {
+                    NSString *trimmedKeyword = [keyword stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                    if (trimmedKeyword.length > 0 && [self.itemTitle containsString:trimmedKeyword]) {
+                        shouldFilterKeywords = YES;
+                        break;
+                    }
+                }
+            }
+            
+            // 如果标题中没有关键词，检查标签(textExtras)
+            if (!shouldFilterKeywords && self.textExtras.count > 0) {
+                for (AWEAwemeTextExtraModel *textExtra in self.textExtras) {
+                    NSString *hashtagName = textExtra.hashtagName;
+                    if (hashtagName.length > 0) {
+                        for (NSString *keyword in keywordsList) {
+                            NSString *trimmedKeyword = [keyword stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                            if (trimmedKeyword.length > 0 && [hashtagName containsString:trimmedKeyword]) {
+                                shouldFilterKeywords = YES;
+                                break;
+                            }
+                        }
+                        if (shouldFilterKeywords) break;
+                    }
+                }
+            }
+        }
+    }
+    
+    return (shouldFilterAds || shouldFilterRec || shouldFilterHotSpot || shouldFilterLowLikes || shouldFilterKeywords) ? nil : orig;
 }
 
 - (id)init {
     id orig = %orig;
+    
     BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
-    return (noAds && self.isAds) ? nil : orig;
+    BOOL skipLive = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipLive"];
+    BOOL skipHotSpot = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisSkipHotSpot"];
+    
+    BOOL shouldFilterAds = noAds && (self.hotSpotLynxCardModel || self.isAds);
+    BOOL shouldFilterRec = skipLive && [self.liveReason isEqualToString:@"rec"];
+    BOOL shouldFilterHotSpot = skipHotSpot && self.hotSpotLynxCardModel;
+    
+    BOOL shouldFilterLowLikes = NO;
+    BOOL shouldFilterKeywords = NO;
+    
+    // 获取用户设置的需要过滤的关键词
+    NSString *filterKeywords = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYfilterKeywords"];
+    NSArray *keywordsList = nil;
+    
+    if (filterKeywords.length > 0) {
+        keywordsList = [filterKeywords componentsSeparatedByString:@","];
+    }
+    
+    NSInteger filterLowLikesThreshold = [[NSUserDefaults standardUserDefaults] integerForKey:@"DYYYfilterLowLikes"];
+        
+    // 只有当shareRecExtra不为空时才过滤点赞量低的视频和关键词
+    if (self.shareRecExtra && ![self.shareRecExtra isEqual:@""]) {
+        // 过滤低点赞量视频
+        if (filterLowLikesThreshold > 0) {
+            AWESearchAwemeExtraModel *searchExtraModel = [self searchExtraModel];
+            if (!searchExtraModel) {
+                AWEAwemeStatisticsModel *statistics = self.statistics;
+                if (statistics && statistics.diggCount) {
+                    shouldFilterLowLikes = statistics.diggCount.integerValue < filterLowLikesThreshold;
+                }
+            }
+        }
+        
+        // 过滤包含特定关键词的视频
+        if (keywordsList.count > 0) {
+            // 检查视频标题
+            if (self.itemTitle.length > 0) {
+                for (NSString *keyword in keywordsList) {
+                    NSString *trimmedKeyword = [keyword stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                    if (trimmedKeyword.length > 0 && [self.itemTitle containsString:trimmedKeyword]) {
+                        shouldFilterKeywords = YES;
+                        break;
+                    }
+                }
+            }
+            
+            // 如果标题中没有关键词，检查标签(textExtras)
+            if (!shouldFilterKeywords && self.textExtras.count > 0) {
+                for (AWEAwemeTextExtraModel *textExtra in self.textExtras) {
+                    NSString *hashtagName = textExtra.hashtagName;
+                    if (hashtagName.length > 0) {
+                        for (NSString *keyword in keywordsList) {
+                            NSString *trimmedKeyword = [keyword stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                            if (trimmedKeyword.length > 0 && [hashtagName containsString:trimmedKeyword]) {
+                                shouldFilterKeywords = YES;
+                                break;
+                            }
+                        }
+                        if (shouldFilterKeywords) break;
+                    }
+                }
+            }
+        }
+    }
+    
+    return (shouldFilterAds || shouldFilterRec || shouldFilterHotSpot || shouldFilterLowLikes || shouldFilterKeywords) ? nil : orig;
 }
-
-- (void)setIsAds:(BOOL)isAds {
-    BOOL noAds = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoAds"];
-    %orig(noAds ? isAds : NO); 
-}
-
 %end
 
 // 拦截开屏广告
@@ -1125,7 +1289,6 @@
 
     BOOL hideShop = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideShopButton"];
     BOOL hideMsg = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideMessageButton"];
-    BOOL hidew = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYwMessageButton"];
     BOOL hideFri = [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideFriendsButton"];
     
     NSMutableArray *visibleButtons = [NSMutableArray array];
@@ -1138,15 +1301,10 @@
         NSString *label = subview.accessibilityLabel;
         BOOL shouldHide = NO;
         
-        
         if ([label isEqualToString:@"商城"]) {
             shouldHide = hideShop;
         } else if ([label containsString:@"消息"]) {
             shouldHide = hideMsg;
-
-        } else if ([label containsString:@"我"]) {
-            shouldHide = hidew;
-
         } else if ([label containsString:@"朋友"]) {
             shouldHide = hideFri;
         }
@@ -2162,11 +2320,80 @@
         };
         
         [viewModels addObject:copyShareLink];
-    
+
     }
-    
+
+    // 添加接口保存功能
+    NSString *apiKey = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYInterfaceDownload"];
+    if (apiKey.length > 0) {
+        AWELongPressPanelBaseViewModel *apiDownload = [[%c(AWELongPressPanelBaseViewModel) alloc] init];
+        apiDownload.awemeModel = self.awemeModel;
+        apiDownload.actionType = 673;
+        apiDownload.duxIconName = @"ic_cloudarrowdown_outlined_20";
+        apiDownload.describeString = @"接口保存视频";
+            
+        apiDownload.action = ^{
+            NSString *shareLink = [self.awemeModel valueForKey:@"shareURL"];
+            if (shareLink.length == 0) {
+                [DYYYManager showToast:@"无法获取分享链接"];
+                return;
+            }
+                
+            // 拼接API请求URL
+            NSString *apiUrl = [NSString stringWithFormat:@"%@%@", apiKey, [shareLink stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+                
+            [DYYYManager showToast:@"正在通过接口解析..."];
+
+            NSURL *url = [NSURL URLWithString:apiUrl];
+            NSURLRequest *request = [NSURLRequest requestWithURL:url];
+                
+            NSURLSession *session = [NSURLSession sharedSession];
+            NSURLSessionDataTask *dataTask = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (error) {
+                        [DYYYManager showToast:[NSString stringWithFormat:@"接口请求失败: %@", error.localizedDescription]];
+                        return;
+                    }
+                        
+                    NSError *jsonError;
+                    NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+                        
+                    if (jsonError) {
+                        [DYYYManager showToast:@"解析接口返回数据失败"];
+                        return;
+                    }
+                        
+                    NSInteger code = [json[@"code"] integerValue];
+                    if (code != 200) {
+                        [DYYYManager showToast:[NSString stringWithFormat:@"接口返回错误: %@", json[@"msg"] ?: @"未知错误"]];
+                        return;
+                    }
+
+                    NSDictionary *data = json[@"data"];
+                    NSString *videoUrl = data[@"video"] ?: data[@"video_url"] ?: data[@"url"];
+                        
+                    if (videoUrl.length == 0) {
+                        [DYYYManager showToast:@"接口未返回有效的视频链接"];
+                        return;
+                    }
+                        
+                    NSURL *videoDownloadUrl = [NSURL URLWithString:videoUrl];
+                    [DYYYManager downloadMedia:videoDownloadUrl mediaType:MediaTypeVideo completion:^{
+                        [DYYYManager showToast:@"视频已保存到相册"];
+                    }];
+                });
+            }];
+                
+            [dataTask resume];
+                
+            AWELongPressPanelManager *panelManager = [%c(AWELongPressPanelManager) shareInstance];
+            [panelManager dismissWithAnimation:YES completion:nil];
+         };
+            
+        [viewModels addObject:apiDownload];
+    }
+
     newGroupModel.groupArr = viewModels;
-    
     return [@[newGroupModel] arrayByAddingObjectsFromArray:originalArray];
 }
 
@@ -2412,7 +2639,77 @@
         [viewModels addObject:copyShareLink];
     
     }
-    
+
+    // 添加接口保存功能
+    NSString *apiKey = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYInterfaceDownload"];
+    if (apiKey.length > 0) {
+        AWELongPressPanelBaseViewModel *apiDownload = [[%c(AWELongPressPanelBaseViewModel) alloc] init];
+        apiDownload.awemeModel = self.awemeModel;
+        apiDownload.actionType = 673;
+        apiDownload.duxIconName = @"ic_cloudarrowdown_outlined_20";
+        apiDownload.describeString = @"接口保存视频";
+            
+        apiDownload.action = ^{
+            NSString *shareLink = [self.awemeModel valueForKey:@"shareURL"];
+            if (shareLink.length == 0) {
+                [DYYYManager showToast:@"无法获取分享链接"];
+                return;
+            }
+                
+            // 拼接API请求URL
+            NSString *apiUrl = [NSString stringWithFormat:@"%@%@", apiKey, [shareLink stringByAddingPercentEncodingWithAllowedCharacters:[NSCharacterSet URLQueryAllowedCharacterSet]]];
+                
+            [DYYYManager showToast:@"正在通过接口解析..."];
+
+            NSURL *url = [NSURL URLWithString:apiUrl];
+            NSURLRequest *request = [NSURLRequest requestWithURL:url];
+                
+            NSURLSession *session = [NSURLSession sharedSession];
+            NSURLSessionDataTask *dataTask = [session dataTaskWithRequest:request completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (error) {
+                        [DYYYManager showToast:[NSString stringWithFormat:@"接口请求失败: %@", error.localizedDescription]];
+                        return;
+                    }
+                        
+                    NSError *jsonError;
+                    NSDictionary *json = [NSJSONSerialization JSONObjectWithData:data options:0 error:&jsonError];
+                        
+                    if (jsonError) {
+                        [DYYYManager showToast:@"解析接口返回数据失败"];
+                        return;
+                    }
+                        
+                    NSInteger code = [json[@"code"] integerValue];
+                    if (code != 200) {
+                        [DYYYManager showToast:[NSString stringWithFormat:@"接口返回错误: %@", json[@"msg"] ?: @"未知错误"]];
+                        return;
+                    }
+
+                    NSDictionary *data = json[@"data"];
+                    NSString *videoUrl = data[@"video"] ?: data[@"video_url"] ?: data[@"url"];
+                        
+                    if (videoUrl.length == 0) {
+                        [DYYYManager showToast:@"接口未返回有效的视频链接"];
+                        return;
+                    }
+                        
+                    NSURL *videoDownloadUrl = [NSURL URLWithString:videoUrl];
+                    [DYYYManager downloadMedia:videoDownloadUrl mediaType:MediaTypeVideo completion:^{
+                        [DYYYManager showToast:@"视频已保存到相册"];
+                    }];
+                });
+            }];
+                
+            [dataTask resume];
+                
+            AWELongPressPanelManager *panelManager = [%c(AWELongPressPanelManager) shareInstance];
+            [panelManager dismissWithAnimation:YES completion:nil];
+         };
+            
+        [viewModels addObject:apiDownload];
+    }
+
     newGroupModel.groupArr = viewModels;
     
     return [@[newGroupModel] arrayByAddingObjectsFromArray:originalArray];
@@ -2912,6 +3209,30 @@ static BOOL isDownloadFlied = NO;
         }
     }
     return %orig;
+}
+
+%end
+
+// 屏蔽版本更新
+%hook AWEVersionUpdateManager
+
+- (void)startVersionUpdateWorkflow:(id)arg1 completion:(id)arg2 {
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoUpdates"]) {
+        if (arg2) {
+            void (^completionBlock)(void) = arg2;
+            completionBlock();
+        }
+    } else {
+        %orig;
+    }
+}
+
+- (id)workflow {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoUpdates"] ? nil : %orig;
+}
+
+- (id)badgeModule {
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYNoUpdates"] ? nil : %orig;
 }
 
 %end
