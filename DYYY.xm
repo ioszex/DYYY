@@ -2918,21 +2918,16 @@ static BOOL isDownloadFlied = NO;
 
 //印章部分分享按钮
 %hook AWELongPresslnteractiveCell
-
 - (void)layoutSubviews {
-    %orig;
-
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHidecpdd"]) {
-        // 找到父视图并隐藏
-        UIView *parentView = self.superview;
-        if (parentView) {
-            parentView.hidden = YES;
-        } else {
-            self.hidden = YES;
+        if ([self respondsToSelector:@selector(removeFromSuperview)]) {
+            [self removeFromSuperview];
         }
+        self.hidden = YES;
+        return; 
     }
+    %orig;
 }
-
 %end
 
 
