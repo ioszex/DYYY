@@ -2916,22 +2916,6 @@ static BOOL isDownloadFlied = NO;
 
 %end
 
-//印章部分分享按钮
-%hook AWELongPresslnteractiveCell
-- (void)layoutSubviews {
-    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHidecpdd"]) {
-        if ([self respondsToSelector:@selector(removeFromSuperview)]) {
-            [self removeFromSuperview];
-        }
-        self.hidden = YES;
-        return; 
-     }
-    }
-    return %orig;
-}
-
-%end
-
 %ctor {
     %init(DYYYSettingsGesture);
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"]) {
