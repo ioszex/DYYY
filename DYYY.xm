@@ -2916,6 +2916,26 @@ static BOOL isDownloadFlied = NO;
 
 %end
 
+//印章部分分享按钮
+%hook AWELongPresslnteractiveCell
+
+- (void)layoutSubviews {
+    %orig;
+
+    if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHidecpdd"]) {
+        // 找到父视图并隐藏
+        UIView *parentView = self.superview;
+        if (parentView) {
+            parentView.hidden = YES;
+        } else {
+            self.hidden = YES;
+        }
+    }
+}
+
+%end
+
+
 %ctor {
     %init(DYYYSettingsGesture);
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"]) {
