@@ -339,8 +339,8 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
     [optionsDialog show];
 }
 
-#undef DYYY
-#define DYYY @"DYYY设置"
+#undef YYDS
+#define YYDS @"YYDS设置"
 
 static void *kViewModelKey = &kViewModelKey;
 %hook AWESettingBaseViewController
@@ -420,8 +420,8 @@ static void showUserAgreementAlert() {
     if (self.traceEnterFrom && !sectionExists) {
         
         AWESettingItemModel *dyyyItem = [[%c(AWESettingItemModel) alloc] init];
-        dyyyItem.identifier = @"DYYY";
-        dyyyItem.title = @"DYYY";
+        dyyyItem.identifier = @"YYDS";
+        dyyyItem.title = @"YYDS";
         dyyyItem.detail = @"v2.2-2";
         dyyyItem.type = 0;
         dyyyItem.svgIconImageName = @"ic_sapling_outlined";
@@ -445,7 +445,7 @@ static void showUserAgreementAlert() {
                         if ([subview isKindOfClass:%c(AWENavigationBar)]) {
                             AWENavigationBar *navigationBar = (AWENavigationBar *)subview;
                             if ([navigationBar respondsToSelector:@selector(titleLabel)]) {
-                                navigationBar.titleLabel.text = DYYY;
+                                navigationBar.titleLabel.text = YYDS;
                             }
                             break;
                         }
