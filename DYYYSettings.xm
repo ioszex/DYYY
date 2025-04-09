@@ -339,8 +339,8 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
     [optionsDialog show];
 }
 
-#undef 9527
-#define 9527 @"9527助手"
+#undef ASSISTANT_NAME
+#define ASSISTANT_NAME @"9527助手"
 
 static void *kViewModelKey = &kViewModelKey;
 %hook AWESettingBaseViewController
@@ -445,7 +445,7 @@ static void showUserAgreementAlert() {
                         if ([subview isKindOfClass:%c(AWENavigationBar)]) {
                             AWENavigationBar *navigationBar = (AWENavigationBar *)subview;
                             if ([navigationBar respondsToSelector:@selector(titleLabel)]) {
-                                navigationBar.titleLabel.text = 9527;
+                                navigationBar.titleLabel.text = ASSISTANT_NAME;
                             }
                             break;
                         }
