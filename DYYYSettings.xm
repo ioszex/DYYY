@@ -339,7 +339,7 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
     [optionsDialog show];
 }
 
-#undef ASSISTANT_NAME
+#undef 插件
 #define ASSISTANT_NAME @"9527助手"
 
 static void *kViewModelKey = &kViewModelKey;
@@ -412,7 +412,7 @@ static void showUserAgreementAlert() {
     NSArray *originalSections = %orig;
     BOOL sectionExists = NO;
     for (AWESettingSectionModel *section in originalSections) {
-        if ([section.sectionHeaderTitle isEqualToString:@"插件"]) {
+        if ([section.sectionHeaderTitle isEqualToString:@"DYYY"]) {
             sectionExists = YES;
             break;
         }
