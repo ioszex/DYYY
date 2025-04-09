@@ -412,7 +412,7 @@ static void showUserAgreementAlert() {
     NSArray *originalSections = %orig;
     BOOL sectionExists = NO;
     for (AWESettingSectionModel *section in originalSections) {
-        if ([section.sectionHeaderTitle isEqualToString:@"DYYY"]) {
+        if ([section.sectionHeaderTitle isEqualToString:@"9527助手"]) {
             sectionExists = YES;
             break;
         }
