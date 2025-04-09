@@ -339,8 +339,8 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
     [optionsDialog show];
 }
 
-#undef DYYY
-#define DYYY @"DYYY设置"
+#undef 9527助手
+#define 9527助手 @"9527助手"
 
 static void *kViewModelKey = &kViewModelKey;
 %hook AWESettingBaseViewController
@@ -391,6 +391,22 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
     return section;
 }
 
+static void showUserAgreementAlert() {
+    showTextInputAlert(@"用户协议", @"", @"", ^(NSString *text) {
+            if ([text isEqualToString:@"我已阅读并同意继续使用"]) {
+                setUserDefaults(@"YES", @"DYYYUserAgreementAccepted");
+            } else {
+                [DYYYManager showToast:@"请正确输入内容"];
+                showUserAgreementAlert();
+            }
+        }, ^(void) {
+            [DYYYManager showToast:@"请立即卸载本插件"];
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                exit(0);
+            });
+        });
+}
+
 %hook AWESettingsViewModel
 - (NSArray *)sectionDataArray {
     NSArray *originalSections = %orig;
@@ -417,8 +433,8 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
             AWESettingBaseViewController *settingsVC = [[%c(AWESettingBaseViewController) alloc] init];
             BOOL hasAgreed = getUserDefaults(@"DYYYUserAgreementAccepted");
             if (!hasAgreed) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [DYYYManager showToast:@"当前设置无法生效，因为您还没有前往旧版界面同意使用协议。"];
+                showAboutDialog(@"用户协议", @"本插件为开源项目\n仅供学习交流用途\n如有侵权请联系, GitHub 仓库：huami1314/DYYY\n请遵守当地法律法规, 逆向工程仅为学习目的\n盗用源码进行商业用途/发布但未标记开源项目必究\n详情请参阅项目内 MIT 许可证\n\n请输入\"我已阅读并同意继续使用\"以继续", ^{
+                    showUserAgreementAlert();
                 });
             }
 
@@ -556,7 +572,6 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 // 【杂项设置】分类
                 NSMutableArray<AWESettingItemModel *> *miscellaneousItems = [NSMutableArray array];
                 NSArray *miscellaneousSettings = @[
-                    @{@"identifier": @"DYYYisDarkKeyBoard", @"title": @"启用深色键盘", @"detail": @"", @"cellType": @6, @"imageName": @"ic_keyboard_outlined"},
                     @{@"identifier": @"DYYYisHideStatusbar", @"title": @"隐藏系统顶栏", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYisEnablePure", @"title": @"启用首页净化", @"detail": @"", @"cellType": @6, @"imageName": @"ic_broom_outlined"},
                     @{@"identifier": @"DYYYisEnableFullScreen", @"title": @"启用首页全屏", @"detail": @"", @"cellType": @6, @"imageName": @"ic_fullscreen_outlined_16"}
@@ -573,9 +588,10 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                     @{@"identifier": @"DYYYisSkipHotSpot", @"title": @"推荐过滤热点", @"detail": @"", @"cellType": @6, @"imageName": @"ic_squaretriangletwo_outlined_20"},
                     @{@"identifier": @"DYYYfilterLowLikes", @"title": @"推荐过滤低赞", @"detail": @"0", @"cellType": @26, @"imageName": @"ic_thumbsdown_outlined_20"},
                     @{@"identifier": @"DYYYfilterKeywords", @"title": @"推荐过滤文案", @"detail": @"", @"cellType": @26, @"imageName": @"ic_tag_outlined_20"},
+                    @{@"identifier": @"DYYYfiltertimelimit", @"title": @"推荐视频时限", @"detail": @"", @"cellType": @26, @"imageName": @"ic_playertime_outlined_20"},
                     @{@"identifier": @"DYYYNoAds", @"title": @"启用屏蔽广告", @"detail": @"", @"cellType": @6, @"imageName": @"ic_ad_outlined_20"},
                     @{@"identifier": @"DYYYNoUpdates", @"title": @"屏蔽检测更新", @"detail": @"", @"cellType": @6, @"imageName": @"ic_circletop_outlined"},
-                    @{@"identifier": @"DYYYHideteenmode", @"title": @"屏蔽青少年模式弹窗", @"detail": @"", @"cellType": @6, @"imageName": @"ic_personcircleclean_outlined_20"}
+                    @{@"identifier": @"DYYYHideteenmode", @"title": @"去青少年弹窗", @"detail": @"", @"cellType": @6, @"imageName": @"ic_personcircleclean_outlined_20"}
                 ];
                 
                 for (NSDictionary *dict in filterSettings) {
@@ -643,6 +659,31 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                                 }
                             }, nil);
                         };
+                    } else if ([item.identifier isEqualToString:@"DYYYfiltertimelimit"]) {
+                        NSString *savedValue = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYfiltertimelimit"];
+                        item.detail = savedValue ?: @"";
+                        item.cellTappedBlock = ^{
+                            showTextInputAlert(@"过滤视频的发布时间", item.detail, @"单位为天", ^(NSString *text) {
+                                NSString *trimmedText = [text stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+                                setUserDefaults(trimmedText, @"DYYYfiltertimelimit");
+                                item.detail = trimmedText ?: @"";
+                                UIViewController *topVC = topView();
+                                if ([topVC isKindOfClass:%c(AWESettingBaseViewController)]) {
+                                    dispatch_async(dispatch_get_main_queue(), ^{
+                                        UITableView *tableView = nil;
+                                        for (UIView *subview in topVC.view.subviews) {
+                                            if ([subview isKindOfClass:[UITableView class]]) {
+                                                tableView = (UITableView *)subview;
+                                                break;
+                                            }
+                                        }
+                                        if (tableView) {
+                                            [tableView reloadData];
+                                        }
+                                    });
+                                }
+                            }, nil);
+                        };
                     }
                     [filterItems addObject:item];
                 }
@@ -691,6 +732,7 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 NSArray *transparencySettings = @[
                     @{@"identifier": @"DYYYtopbartransparent", @"title": @"设置顶栏透明", @"detail": @"0-1小数", @"cellType": @26, @"imageName": @"ic_module_outlined_20"},
                     @{@"identifier": @"DYYYGlobalTransparency", @"title": @"设置全局透明", @"detail": @"0-1小数", @"cellType": @26, @"imageName": @"ic_eye_outlined_20"},
+                    @{@"identifier": @"DYYYAvatarViewTransparency", @"title": @"首页头像透明", @"detail": @"0-1小数", @"cellType": @26, @"imageName": @"ic_user_outlined_20"},
                     @{@"identifier": @"DYYYisEnableCommentBlur", @"title": @"评论区毛玻璃", @"detail": @"", @"cellType": @6, @"imageName": @"ic_comment_outlined_20"}, 
                     @{@"identifier": @"DYYYCommentBlurTransparent", @"title": @"毛玻璃透明度", @"detail": @"0-1小数", @"cellType": @26, @"imageName": @"ic_eye_outlined_20"}      
                 ];
@@ -707,7 +749,7 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                     @{@"identifier": @"DYYYNicknameScale", @"title": @"昵称文案缩放", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_zoomin_outlined_20"},
                     @{@"identifier": @"DYYYNicknameVerticalOffset", @"title": @"昵称下移距离", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_pensketch_outlined_20"},
                     @{@"identifier": @"DYYYDescriptionVerticalOffset", @"title": @"文案下移距离", @"detail": @"不填默认", @"cellType": @26, @"imageName": @"ic_pensketch_outlined_20"},
-                    @{@"identifier": @"DYYYIPLeftShiftOffset", @"title": @"属地左移距离", @"detail": @"", @"cellType": @26, @"imageName": @"ic_pensketch_outlined_20"},
+                    @{@"identifier": @"DYYYIPLabelVerticalOffset", @"title": @"属地上移距离", @"detail": @"默认为 3", @"cellType": @26, @"imageName": @"ic_pensketch_outlined_20"},
                 ];
                 
                 for (NSDictionary *dict in scaleSettings) {
@@ -735,10 +777,10 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 // 添加图标自定义项
                 [iconItems addObject:createIconCustomizationItem(@"DYYYIconLikeBefore", @"未点赞图标", @"ic_heart_outlined_20", @"like_before.png")];
                 [iconItems addObject:createIconCustomizationItem(@"DYYYIconLikeAfter", @"已点赞图标", @"ic_heart_filled_20", @"like_after.png")];
-                [iconItems addObject:createIconCustomizationItem(@"DYYYIconComment", @"评论图标", @"ic_comment_outlined_20", @"comment.png")];
+                [iconItems addObject:createIconCustomizationItem(@"DYYYIconComment", @"评论的图标", @"ic_comment_outlined_20", @"comment.png")];
                 [iconItems addObject:createIconCustomizationItem(@"DYYYIconUnfavorite", @"未收藏图标", @"ic_star_outlined_20", @"unfavorite.png")];
                 [iconItems addObject:createIconCustomizationItem(@"DYYYIconFavorite", @"已收藏图标", @"ic_star_filled_20", @"favorite.png")];
-                [iconItems addObject:createIconCustomizationItem(@"DYYYIconShare", @"分享图标", @"ic_share_outlined", @"share.png")];
+                [iconItems addObject:createIconCustomizationItem(@"DYYYIconShare", @"分享的图标", @"ic_share_outlined", @"share.png")];
                                 
                 // 将图标自定义section添加到sections数组
                 NSMutableArray *sections = [NSMutableArray array];
@@ -774,7 +816,8 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                     @{@"identifier": @"DYYYHideShopButton", @"title": @"隐藏底栏商城", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideMessageButton", @"title": @"隐藏底栏消息", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideFriendsButton", @"title": @"隐藏底栏朋友", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
-                    @{@"identifier": @"DYYYisHiddenJia", @"title": @"隐藏底栏加号", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"}
+                    @{@"identifier": @"DYYYisHiddenJia", @"title": @"隐藏底栏加号", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideTopBarBadge", @"title": @"隐藏顶栏红点", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"}
                 ];
                 
                 for (NSDictionary *dict in mainUiSettings) {
@@ -840,8 +883,6 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                     @{@"identifier": @"DYYYHideNearbyCapsuleView", @"title": @"隐藏吃喝玩乐", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideDiscover", @"title": @"隐藏右上搜索", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideInteractionSearch", @"title": @"隐藏相关搜索", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
-                    @{@"identifier": @"DYYYHideEnterLive", @"title": @"隐藏进入直播", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
-                    @{@"identifier": @"DYYYHideCommentViews", @"title": @"隐藏评论视图", @"detail": @"隐藏评论区的搜索、定位、预约、音乐、商品和游戏视图", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideDanmuButton", @"title": @"隐藏弹幕按钮", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideCancelMute", @"title": @"隐藏静音按钮", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideLocation", @"title": @"隐藏视频定位", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
@@ -864,15 +905,38 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                     @{@"identifier": @"DYYYHideItemTag", @"title": @"隐藏笔记标签", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideTemplateGroup", @"title": @"隐藏底部话题", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideCameraLocation", @"title": @"隐藏相机定位", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideCommentViews", @"title": @"隐藏评论视图", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                     @{@"identifier": @"DYYYHideLiveCapsuleView", @"title": @"隐藏直播胶囊", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
-                    @{@"identifier": @"DYYYHideStoryProgressSlide", @"title": @"隐藏视频滑条", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"}
+                    @{@"identifier": @"DYYYHideStoryProgressSlide", @"title": @"隐藏视频滑条", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideDotsIndicator", @"title": @"隐藏图片滑条", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHidePrivateMessages", @"title": @"隐藏分享私信", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideRightLable", @"title": @"隐藏昵称右侧", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideChatCommentBg", @"title": @"聊天评论透明", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
                 ];
                 
                 for (NSDictionary *dict in infoSettings) {
                     AWESettingItemModel *item = [self createSettingItem:dict];
                     [infoItems addObject:item];
                 }
-                
+
+                // 【直播界面净化】分类
+                NSMutableArray<AWESettingItemModel *> *livestreamItems = [NSMutableArray array];
+                NSArray *livestreamSettings = @[
+                    @{@"identifier": @"DYYYHideLivePlayground", @"title": @"隐藏直播广场", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideEnterLive", @"title": @"隐藏进入直播", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideGiftPavilion", @"title": @"隐藏礼物展馆", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideLiveRoomClear", @"title": @"隐藏退出清屏", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideLiveRoomMirroring", @"title": @"隐藏投屏按钮", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideLiveDiscovery", @"title": @"隐藏直播发现", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideKTVSongIndicator", @"title": @"隐藏直播点歌", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"},
+                    @{@"identifier": @"DYYYHideCellularAlert", @"title": @"隐藏流量提醒", @"detail": @"", @"cellType": @6, @"imageName": @"ic_eyeslash_outlined_16"}
+                    
+                ];
+                for (NSDictionary *dict in livestreamSettings) {
+                    AWESettingItemModel *item = [self createSettingItem:dict];
+                    [livestreamItems addObject:item];
+                }
+
                 // 创建并组织所有section
                 NSMutableArray *sections = [NSMutableArray array];
                 [sections addObject:createSection(@"主界面元素", mainUiItems)];
@@ -880,6 +944,7 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 [sections addObject:createSection(@"侧边栏元素", sidebarItems)];
                 [sections addObject:createSection(@"消息页与我的页", messageAndMineItems)];
                 [sections addObject:createSection(@"提示与位置信息", infoItems)];
+                [sections addObject:createSection(@"直播间界面", livestreamItems)];
                 
                 // 创建并推入二级设置页面
                 AWESettingBaseViewController *subVC = createSubSettingsViewController(@"隐藏设置", sections);
@@ -1026,6 +1091,7 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                 // 【交互增强】分类
                 NSMutableArray<AWESettingItemModel *> *interactionItems = [NSMutableArray array];
                 NSArray *interactionSettings = @[
+                    @{@"identifier": @"DYYYisEnableModern", @"title": @"启用新版玻璃面板", @"detail": @"", @"cellType": @6, @"imageName": @"ic_gearsimplify_outlined_20"},
                     @{@"identifier": @"DYYYDisableHomeRefresh", @"title": @"禁用点击首页刷新", @"detail": @"", @"cellType": @6, @"imageName": @"ic_arrowcircle_outlined_20"},
                     @{@"identifier": @"DYYYDouble", @"title": @"禁用双击视频点赞", @"detail": @"", @"cellType": @6, @"imageName": @"ic_thumbsup_outlined_20"},
                     @{@"identifier": @"DYYYEnableDoubleOpenComment", @"title": @"启用双击打开评论", @"detail": @"", @"cellType": @6, @"imageName": @"ic_comment_outlined_20"},
@@ -1037,6 +1103,12 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                     // 为双击菜单选项添加特殊处理
                     if ([item.identifier isEqualToString:@"DYYYEnableDoubleOpenAlertController"]) {
                         item.cellTappedBlock = ^{
+                            // 检查是否启用了双击打开评论功能
+                            BOOL isEnableDoubleOpenComment = getUserDefaults(@"DYYYEnableDoubleOpenComment");
+                            if (isEnableDoubleOpenComment) {
+                                return;
+                            }
+                            
                             NSMutableArray<AWESettingItemModel *> *doubleTapItems = [NSMutableArray array];
                             AWESettingItemModel *enableDoubleTapMenu = [self createSettingItem:@{
                                 @"identifier": @"DYYYEnableDoubleOpenAlertController", 
@@ -1054,6 +1126,8 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                                 @{@"identifier": @"DYYYDoubleTapCopyDesc", @"title": @"复制文案", @"detail": @"", @"cellType": @6, @"imageName": @"ic_rectangleonrectangleup_outlined_20"},
                                 @{@"identifier": @"DYYYDoubleTapComment", @"title": @"打开评论", @"detail": @"", @"cellType": @6, @"imageName": @"ic_comment_outlined_20"},
                                 @{@"identifier": @"DYYYDoubleTapLike", @"title": @"点赞视频", @"detail": @"", @"cellType": @6, @"imageName": @"ic_heart_outlined_20"},
+                                @{@"identifier": @"DYYYDoubleTapshowDislikeOnVideo", @"title": @"长按面板", @"detail": @"", @"cellType": @6, @"imageName": @"ic_xiaoxihuazhonghua_outlined_20"},                               
+                                @{@"identifier": @"DYYYDoubleTapshowSharePanel", @"title": @"分享视频", @"detail": @"", @"cellType": @6, @"imageName": @"ic_share_outlined"},
                             ];
                             
                             for (NSDictionary *dict in doubleTapFunctions) {
@@ -1522,6 +1596,9 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
         [self updateDependentItemsForSetting:identifier value:@(isEnabled)];
     }
     else if ([identifier isEqualToString:@"DYYYEnableDoubleOpenComment"]) {
+        // 不论是开启还是关闭，都需要更新相关依赖项状态
+        [self updateDependentItemsForSetting:identifier value:@(isEnabled)];
+        
         if (isEnabled) {
             // 如果启用双击打开评论，禁用双击打开菜单
             setUserDefaults(@(NO), @"DYYYEnableDoubleOpenAlertController");
@@ -1529,6 +1606,9 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
         }
     }
     else if ([identifier isEqualToString:@"DYYYEnableDoubleOpenAlertController"]) {
+        // 不论是开启还是关闭，都需要更新相关依赖项状态
+        [self updateDependentItemsForSetting:identifier value:@(isEnabled)];
+        
         if (isEnabled) {
             // 如果启用双击打开菜单，禁用双击打开评论
             setUserDefaults(@(NO), @"DYYYEnableDoubleOpenComment");
@@ -1590,18 +1670,16 @@ static AWESettingSectionModel* createSection(NSString* title, NSArray* items) {
                     }
                 }
             }
-            else if ([identifier isEqualToString:@"DYYYEnableDoubleOpenAlertController"] && 
-                     [item.identifier isEqualToString:@"DYYYEnableDoubleOpenComment"]) {
-                item.isEnable = ![value boolValue];
-                if ([value boolValue]) {
-                    item.isSwitchOn = NO;
+            else if ([identifier isEqualToString:@"DYYYEnableDoubleOpenComment"]) {
+                if ([item.identifier isEqualToString:@"DYYYEnableDoubleOpenAlertController"]) {
+                    // 如果"双击打开评论"被禁用，则启用"双击打开菜单"选项
+                    item.isEnable = ![value boolValue];
                 }
             }
-            else if ([identifier isEqualToString:@"DYYYEnableDoubleOpenComment"] && 
-                     [item.identifier isEqualToString:@"DYYYEnableDoubleOpenAlertController"]) {
-                item.isEnable = ![value boolValue];
-                if ([value boolValue]) {
-                    item.isSwitchOn = NO;
+            else if ([identifier isEqualToString:@"DYYYEnableDoubleOpenAlertController"]) {
+                if ([item.identifier isEqualToString:@"DYYYEnableDoubleOpenComment"]) {
+                    // 如果"双击打开菜单"被禁用，则启用"双击打开评论"选项
+                    item.isEnable = ![value boolValue];
                 }
             }
             // 新增更新逻辑
