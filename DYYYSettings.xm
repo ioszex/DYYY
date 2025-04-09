@@ -1394,11 +1394,7 @@ static void showUserAgreementAlert() {
                     @"感谢使用DYYY\n\n"
                     @"感谢huami开源\n\n"
                     @"@维他入我心 基于DYYY二次开发\n\n"
-                    @"感谢huami group中群友的支持赞助\n\n"
-                    @"Telegram @huamidev\n\n"
-                    @"Telegram @vita_app\n\n"
-                    @"开源地址 huami1314/DYYY\n\n"
-                    @"仓库地址 Wtrwx/DYYY\n\n" , nil);
+                    @"感谢huami group中群友的支持赞助\n\n" , nil);
             };
             [aboutItems addObject:aboutItem];
             
