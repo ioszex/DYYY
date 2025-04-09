@@ -339,8 +339,8 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
     [optionsDialog show];
 }
 
-#undef 插件
-#define ASSISTANT_NAME @"9527助手"
+#undef 九五二七
+#define 九五二七 @"九五二七助手"
 
 static void *kViewModelKey = &kViewModelKey;
 %hook AWESettingBaseViewController
@@ -420,8 +420,8 @@ static void showUserAgreementAlert() {
     if (self.traceEnterFrom && !sectionExists) {
         
         AWESettingItemModel *dyyyItem = [[%c(AWESettingItemModel) alloc] init];
-        dyyyItem.identifier = @"9527";
-        dyyyItem.title = @"9527";
+        dyyyItem.identifier = @"九五二七";
+        dyyyItem.title = @"九五二七";
         dyyyItem.detail = @"v2.2-2";
         dyyyItem.type = 0;
         dyyyItem.svgIconImageName = @"ic_sapling_outlined";
@@ -445,7 +445,7 @@ static void showUserAgreementAlert() {
                         if ([subview isKindOfClass:%c(AWENavigationBar)]) {
                             AWENavigationBar *navigationBar = (AWENavigationBar *)subview;
                             if ([navigationBar respondsToSelector:@selector(titleLabel)]) {
-                                navigationBar.titleLabel.text = ASSISTANT_NAME;
+                                navigationBar.titleLabel.text = 九五二七;
                             }
                             break;
                         }
