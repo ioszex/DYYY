@@ -458,7 +458,7 @@ static void showUserAgreementAlert() {
             
             // 创建主分类列表
             AWESettingSectionModel *mainSection = [[%c(AWESettingSectionModel) alloc] init];
-            mainSection.sectionHeaderTitle = @"DYYY\n抖音实用增强小功能\n本插件纯本地运行无时间环境限制";
+            mainSection.sectionHeaderTitle = @"\nDYYY\n抖音实用增强小功能\n本插件纯本地运行无时间环境限制";
             mainSection.sectionHeaderHeight = 40;
             mainSection.type = 0;
             NSMutableArray<AWESettingItemModel *> *mainItems = [NSMutableArray array];
