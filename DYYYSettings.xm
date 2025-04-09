@@ -445,7 +445,7 @@ static void showUserAgreementAlert() {
                         if ([subview isKindOfClass:%c(AWENavigationBar)]) {
                             AWENavigationBar *navigationBar = (AWENavigationBar *)subview;
                             if ([navigationBar respondsToSelector:@selector(titleLabel)]) {
-                                navigationBar.titleLabel.text = DYYY;
+                                navigationBar.titleLabel.text = 9527助手;
                             }
                             break;
                         }
