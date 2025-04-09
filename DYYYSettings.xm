@@ -339,8 +339,8 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
     [optionsDialog show];
 }
 
-#undef  九五二七
-#define 九五二七 @"九五二七助手"
+#undef  九五二七1
+#define 九五二七2 @"九五二七助手"
 
 static void *kViewModelKey = &kViewModelKey;
 %hook AWESettingBaseViewController
@@ -412,7 +412,7 @@ static void showUserAgreementAlert() {
     NSArray *originalSections = %orig;
     BOOL sectionExists = NO;
     for (AWESettingSectionModel *section in originalSections) {
-        if ([section.sectionHeaderTitle isEqualToString:@"九五二七"]) {
+        if ([section.sectionHeaderTitle isEqualToString:@"九五二七3"]) {
             sectionExists = YES;
             break;
         }
@@ -420,8 +420,8 @@ static void showUserAgreementAlert() {
     if (self.traceEnterFrom && !sectionExists) {
         
         AWESettingItemModel *dyyyItem = [[%c(AWESettingItemModel) alloc] init];
-        dyyyItem.identifier = @"九五二七";
-        dyyyItem.title = @"九五二七";
+        dyyyItem.identifier = @"九五二七4";
+        dyyyItem.title = @"九五二七5";
         dyyyItem.detail = @"v2.2-2";
         dyyyItem.type = 0;
         dyyyItem.svgIconImageName = @"ic_sapling_outlined";
@@ -445,7 +445,7 @@ static void showUserAgreementAlert() {
                         if ([subview isKindOfClass:%c(AWENavigationBar)]) {
                             AWENavigationBar *navigationBar = (AWENavigationBar *)subview;
                             if ([navigationBar respondsToSelector:@selector(titleLabel)]) {
-                                navigationBar.titleLabel.text = 九五二七;
+                                navigationBar.titleLabel.text = 九五二七6;
                             }
                             break;
                         }
