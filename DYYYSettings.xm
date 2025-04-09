@@ -412,7 +412,7 @@ static void showUserAgreementAlert() {
     NSArray *originalSections = %orig;
     BOOL sectionExists = NO;
     for (AWESettingSectionModel *section in originalSections) {
-        if ([section.sectionHeaderTitle isEqualToString:@"DYYY"]) {
+        if ([section.sectionHeaderTitle isEqualToString:@"9527助手"]) {
             sectionExists = YES;
             break;
         }
@@ -420,8 +420,8 @@ static void showUserAgreementAlert() {
     if (self.traceEnterFrom && !sectionExists) {
         
         AWESettingItemModel *dyyyItem = [[%c(AWESettingItemModel) alloc] init];
-        dyyyItem.identifier = @"DYYY";
-        dyyyItem.title = @"DYYY";
+        dyyyItem.identifier = @"9527助手";
+        dyyyItem.title = @"9527助手";
         dyyyItem.detail = @"v2.2-2";
         dyyyItem.type = 0;
         dyyyItem.svgIconImageName = @"ic_sapling_outlined";
