@@ -339,7 +339,7 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
     [optionsDialog show];
 }
 
-#undef 九五二七
+#undef  九五二七
 #define 九五二七 @"九五二七助手"
 
 static void *kViewModelKey = &kViewModelKey;
@@ -412,7 +412,7 @@ static void showUserAgreementAlert() {
     NSArray *originalSections = %orig;
     BOOL sectionExists = NO;
     for (AWESettingSectionModel *section in originalSections) {
-        if ([section.sectionHeaderTitle isEqualToString:@"DYYY"]) {
+        if ([section.sectionHeaderTitle isEqualToString:@"九五二七"]) {
             sectionExists = YES;
             break;
         }
