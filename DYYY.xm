@@ -12,7 +12,7 @@
 #import "DYYYManager.h"
 #import "DYYYBottomAlertView.h"
 
-#define DYYY @"DYYY"
+#define 九五二七 @"九五二七"
 #define tweakVersion @"2.2-2"
 
 @interface DYYYManager (API)
