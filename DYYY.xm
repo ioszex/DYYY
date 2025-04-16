@@ -1689,7 +1689,7 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
                                                                                range:NSMakeRange(0, locationString.length)];
             }
 
-            label.text = [NSString stringWithFormat:\n@"%@ IP属地：%@",
+            label.text = [NSString stringWithFormat:@"% \n @ IP属地：%@",
                           [cleanedText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]],
                           locationString];
         }
