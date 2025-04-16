@@ -1,20 +1,25 @@
 #import "CityManager.h"
-#import <Foundation/Foundation.h>
 
-@implementation CityManager
+@implementation CityManager {
+    NSDictionary *_provinceMap;
+    NSDictionary *_cityMap;
+    NSDictionary *_districtMap;
+    NSDictionary *_streetMap;
+}
 
 + (instancetype)sharedInstance {
     static CityManager *instance = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
         instance = [[CityManager alloc] init];
-        [instance loadCityData];
+        [instance initializeCityCodeMap];
     });
     return instance;
 }
 
-- (void)loadCityData {
-    self.cityCodeMap = @{
+- (void)initializeCityCodeMap {
+    // 省级数据
+    _provinceMap = @{
 
         @"11":@"北京市",
         @"12":@"天津市",
