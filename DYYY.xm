@@ -1635,64 +1635,46 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
 %hook AWEPlayInteractionTimestampElement
 - (id)timestampLabel {
     UILabel *label = %orig;
-    
+
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableArea"]) {
-        NSString *originalText = label.text;
-        NSString *areaCode = self.model.cityCode;
+        // 原始时间文本处理
+        NSString *text = label.text;
+        NSString *cleanedText = [text stringByReplacingOccurrencesOfString:@"IP属地：.*"
+                                                                withString:@""
+                                                                   options:NSRegularExpressionSearch
+                                                                     range:NSMakeRange(0, text.length)];
         
-        // 获取地理位置信息
-        NSString *province = [CityManager.sharedInstance getProvinceNameWithCode:areaCode] ?: @"";
-        NSString *city = [CityManager.sharedInstance getCityNameWithCode:areaCode] ?: @"";
-        NSString *district = [CityManager.sharedInstance getDistrictNameWithCode:areaCode] ?: @"";
-        NSMutableArray *components = [NSMutableArray new];
+        // 获取第一个IP属地
+        NSString *areaCode1 = self.model.cityCode;
+        NSString *province1 = [CityManager.sharedInstance getProvinceNameWithCode:areaCode1] ?: @"";
+        NSString *city1 = [CityManager.sharedInstance getCityNameWithCode:areaCode1] ?: @"";
         
-        if (province.length > 0) [components addObject:province];
-        if (city.length > 0 && ![city isEqualToString:province]) [components addObject:city];
-        if (district.length > 0) [components addObject:district];
+        // 获取第二个IP属地（示例：假设从其他属性获取）
+        NSString *areaCode2 = self.model.anotherCityCode; // 需确认实际属性名
+        NSString *province2 = [CityManager.sharedInstance getProvinceNameWithCode:areaCode2] ?: @"";
+        NSString *city2 = [CityManager.sharedInstance getCityNameWithCode:areaCode2] ?: @"";
         
-        if (components.count > 0) {
-            // 创建富文本实现换行
-            NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] init];
-            
-            // 时间文本
-            NSMutableAttributedString *timeString = [[NSMutableAttributedString alloc] 
-                initWithString:[NSString stringWithFormat:@"发布时间：%@\n", originalText]
-                    attributes:@{
-                        NSFontAttributeName: label.font,
-                        NSForegroundColorAttributeName: label.textColor
-                    }];
-            
-            // IP属地文本
-            NSMutableAttributedString *locationString = [[NSMutableAttributedString alloc] 
-                initWithString:[NSString stringWithFormat:@"IP属地：%@", [components componentsJoinedByString:@" "]]
-                    attributes:@{
-                        NSFontAttributeName: [UIFont systemFontOfSize:label.font.pointSize - 2],
-                        NSForegroundColorAttributeName: [label.textColor colorWithAlphaComponent:0.7]
-                    }];
-            
-            [attributedText appendAttributedString:timeString];
-            [attributedText appendAttributedString:locationString];
-            
-            // 设置标签属性
-            label.numberOfLines = 0;
-            label.lineBreakMode = NSLineBreakByWordWrapping;
-            [label setAttributedText:attributedText];
-            
-            // 调整布局
-            CGRect newFrame = label.frame;
-            newFrame.size.height = [attributedText boundingRectWithSize:CGSizeMake(label.frame.size.width, CGFLOAT_MAX)
-                options:NSStringDrawingUsesLineFragmentOrigin
-                context:nil].size.height;
-            label.frame = newFrame;
-        }
+        // 构建属地字符串
+        NSString *locationString = [NSString stringWithFormat:@"发布地：%@ %@\n属地：%@ %@", 
+                                  province1, city1, 
+                                  province2, city2];
+        
+        // 设置多行文本
+        label.numberOfLines = 0;
+        label.text = [NSString stringWithFormat:@"%@\n%@", 
+                    [cleanedText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]],
+                    locationString];
+        
+        // 调整字体大小（可选）
+        label.font = [UIFont systemFontOfSize:10];
     }
-    
-    // 颜色设置
+
+    // 自定义标签颜色
     NSString *labelColor = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYLabelColor"];
     if (labelColor.length > 0) {
         label.textColor = [DYYYManager colorWithHexString:labelColor];
     }
-    
+
     return label;
 }
 
