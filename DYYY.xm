@@ -1635,69 +1635,31 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
 
 %hook AWEPlayInteractionTimestampElement
 - (id)timestampLabel {
-    UILabel *label = %orig;
+    UILabel *label = %orig; // 原始时间标签
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableArea"]) {
-        NSString *text = label.text;
-        NSString *areaCode = self.model.cityCode;
+        // 清空原始时间标签的 IP 属地拼接
+        NSString *cleanedText = [self.model.createTime formatTimeString]; // 假设此为原始时间文本
+        label.text = cleanedText;
 
-        NSLog(@"[XUUZ] 当前 areaCode: %@ (%lu 位)", areaCode, (unsigned long)areaCode.length);
-
-        NSString *province = [CityManager.sharedInstance getProvinceNameWithCode:areaCode] ?: @"";
-        NSString *city = [CityManager.sharedInstance getCityNameWithCode:areaCode] ?: @"";
-        NSString *district = [CityManager.sharedInstance getDistrictNameWithCode:areaCode] ?: @"";
-        NSString *street = [CityManager.sharedInstance getStreetNameWithCode:areaCode] ?: @"";
-
-        NSMutableArray *components = [NSMutableArray new];
-        NSString *prefix = areaCode.length >= 2 ? [areaCode substringToIndex:2] : @"";
-
-        if ([@[@"81", @"82", @"71"] containsObject:prefix]) {
-            
-            if (province.length > 0) [components addObject:province];
-            if (city.length > 0) [components addObject:city];
-            if (district.length > 0) [components addObject:district];
-        } else {
-
-            if (province.length > 0 && areaCode.length >= 2) {
-                [components addObject:province];
-            }
-
-            if (city.length > 0 && areaCode.length >= 4 && ![city isEqualToString:province]) {
-                [components addObject:city];
-            }
-
-            if (district.length > 0 && areaCode.length >= 6) {
-                [components addObject:district];
-            }
-
-            if (street.length > 0 && areaCode.length >= 9) {
-                [components addObject:street];
-            }
+        // 创建或更新 IP 属地标签
+        if (!self.ipLocationLabel) {
+            self.ipLocationLabel = [[UILabel alloc] init];
+            self.ipLocationLabel.font = [UIFont systemFontOfSize:10];
+            self.ipLocationLabel.textColor = [UIColor lightGrayColor];
+            [label.superview addSubview:self.ipLocationLabel];
         }
 
-        if (components.count > 0) {
-            NSString *locationString = [components componentsJoinedByString:@" "];
-            NSString *cleanedText = [text stringByReplacingOccurrencesOfString:@"IP属地：.*"
-                                                                    withString:@""
-                                                                       options:NSRegularExpressionSearch
-                                                                         range:NSMakeRange(0, text.length)];
+        // 设置 IP 属地文本
+        NSString *locationString = [self generateLocationString]; // 生成位置信息
+        self.ipLocationLabel.text = [NSString stringWithFormat:@"IP属地：%@", locationString];
 
-            if ([prefix isEqualToString:@"71"] && [district containsString:@"福建省"]) {
-                locationString = [locationString stringByReplacingOccurrencesOfString:@"(福建省)"
-                                                                          withString:@""
-                                                                             options:NSRegularExpressionSearch
-                                                                               range:NSMakeRange(0, locationString.length)];
-            }
-
-            label.text = [NSString stringWithFormat:@"% @ IP属地：%@",
-                          [cleanedText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]],
-                          locationString];
-        }
-    }
-
-    NSString *labelColor = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYLabelColor"];
-    if (labelColor.length > 0) {
-        label.textColor = [DYYYManager colorWithHexString:labelColor];
+        // 调整布局：将 IP 属地标签放在时间标签下方
+        CGRect timeFrame = label.frame;
+        self.ipLocationLabel.frame = CGRectMake(timeFrame.origin.x, 
+                                              timeFrame.origin.y + timeFrame.size.height + 2, // 下移 2pt
+                                              timeFrame.size.width, 
+                                              12); // 适当高度
     }
 
     return label;
