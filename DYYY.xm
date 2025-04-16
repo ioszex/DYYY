@@ -1637,76 +1637,56 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
     UILabel *label = %orig;
 
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableArea"]) {
-        // 原始时间文本
         NSString *originalText = label.text;
-        
-        // 解析属地信息（保留原有逻辑）
         NSString *areaCode = self.model.cityCode;
+
         NSString *province = [CityManager.sharedInstance getProvinceNameWithCode:areaCode] ?: @"";
         NSString *city = [CityManager.sharedInstance getCityNameWithCode:areaCode] ?: @"";
         NSString *district = [CityManager.sharedInstance getDistrictNameWithCode:areaCode] ?: @"";
         NSString *street = [CityManager.sharedInstance getStreetNameWithCode:areaCode] ?: @"";
-        
-        // 构建属地字符串
+
         NSMutableArray *components = [NSMutableArray new];
         NSString *prefix = areaCode.length >= 2 ? [areaCode substringToIndex:2] : @"";
+
         if ([@[@"81", @"82", @"71"] containsObject:prefix]) {
             if (province.length > 0) [components addObject:province];
             if (city.length > 0) [components addObject:city];
             if (district.length > 0) [components addObject:district];
         } else {
-            if (province.length > 0) [components addObject:province];
-            if (city.length > 0 && ![city isEqualToString:province]) [components addObject:city];
-            if (district.length > 0) [components addObject:district];
-            if (street.length > 0) [components addObject:street];
+            if (province.length > 0 && areaCode.length >= 2) {
+                [components addObject:province];
+            }
+            if (city.length > 0 && areaCode.length >= 4 && ![city isEqualToString:province]) {
+                [components addObject:city];
+            }
+            if (district.length > 0 && areaCode.length >= 6) {
+                [components addObject:district];
+            }
+            if (street.length > 0 && areaCode.length >= 9) {
+                [components addObject:street];
+            }
         }
-        NSString *locationString = [components componentsJoinedByString:@" "];
 
-        // 创建新布局
-        UIView *container = [[UIView alloc] initWithFrame:CGRectZero];
-        
-        // 时间标签（保持原始位置）
-        UILabel *timeLabel = [[UILabel alloc] init];
-        timeLabel.text = originalText;
-        timeLabel.font = label.font;
-        timeLabel.textColor = label.textColor;
-        [timeLabel sizeToFit];
-        timeLabel.frame = CGRectMake(0, 0, timeLabel.frame.size.width, timeLabel.frame.size.height);
-        [container addSubview:timeLabel];
-        
-        // IP属地标签（下方新位置）
-        UILabel *areaLabel = [[UILabel alloc] init];
-        areaLabel.text = [NSString stringWithFormat:@"IP属地：%@", locationString];
-        areaLabel.font = [UIFont systemFontOfSize:10]; // 更小字号
-        areaLabel.textColor = [label.textColor colorWithAlphaComponent:0.7];
-        [areaLabel sizeToFit];
-        areaLabel.frame = CGRectMake(0, 
-                                   CGRectGetMaxY(timeLabel.frame) + 2, // 间隔2pt
-                                   areaLabel.frame.size.width, 
-                                   areaLabel.frame.size.height);
-        [container addSubview:areaLabel];
-        
-        // 调整容器大小
-        container.frame = CGRectMake(label.frame.origin.x, 
-                                   label.frame.origin.y, 
-                                   MAX(timeLabel.frame.size.width, areaLabel.frame.size.width), 
-                                   CGRectGetMaxY(areaLabel.frame));
-        
-        // 替换原始label
-        [label.superview addSubview:container];
-        label.hidden = YES; // 隐藏原始标签
-        
-        // 保留原始颜色设置
-        NSString *labelColor = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYLabelColor"];
-        if (labelColor.length > 0) {
-            UIColor *color = [DYYYManager colorWithHexString:labelColor];
-            timeLabel.textColor = color;
-            areaLabel.textColor = [color colorWithAlphaComponent:0.7];
+        if (components.count > 0) {
+            NSString *locationString = [components componentsJoinedByString:@" "];
+            // 移除原有IP属地文本
+            NSString *cleanedText = [originalText stringByReplacingOccurrencesOfString:@"IP属地：.*"
+                                                                            withString:@""
+                                                                               options:NSRegularExpressionSearch
+                                                                                 range:NSMakeRange(0, originalText.length)];
+            // 添加换行符將IP属地放在下方
+            label.numberOfLines = 0; // 允许多行显示
+            label.text = [NSString stringWithFormat:@"%@\nIP属地：%@",
+                          [cleanedText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]],
+                          locationString];
         }
-        
-        return container; // 返回容器视图
     }
-    
+
+    NSString *labelColor = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYLabelColor"];
+    if (labelColor.length > 0) {
+        label.textColor = [DYYYManager colorWithHexString:labelColor];
+    }
+
     return label;
 }
 
