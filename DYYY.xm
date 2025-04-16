@@ -1632,43 +1632,73 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
 %end
 
 //IP属地
-
 %hook AWEPlayInteractionTimestampElement
 - (id)timestampLabel {
-    UILabel *label = %orig; // 原始时间标签
-
+    UILabel *label = %orig;
+    
     if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableArea"]) {
-        // 清空原始时间标签的 IP 属地拼接
-        NSString *cleanedText = [self.model.createTime formatTimeString]; // 假设此为原始时间文本
-        label.text = cleanedText;
-
-        // 创建或更新 IP 属地标签
-        if (!self.ipLocationLabel) {
-            self.ipLocationLabel = [[UILabel alloc] init];
-            self.ipLocationLabel.font = [UIFont systemFontOfSize:10];
-            self.ipLocationLabel.textColor = [UIColor lightGrayColor];
-            [label.superview addSubview:self.ipLocationLabel];
+        NSString *originalText = label.text;
+        NSString *areaCode = self.model.cityCode;
+        
+        // 获取地理位置信息
+        NSString *province = [CityManager.sharedInstance getProvinceNameWithCode:areaCode] ?: @"";
+        NSString *city = [CityManager.sharedInstance getCityNameWithCode:areaCode] ?: @"";
+        NSString *district = [CityManager.sharedInstance getDistrictNameWithCode:areaCode] ?: @"";
+        NSMutableArray *components = [NSMutableArray new];
+        
+        if (province.length > 0) [components addObject:province];
+        if (city.length > 0 && ![city isEqualToString:province]) [components addObject:city];
+        if (district.length > 0) [components addObject:district];
+        
+        if (components.count > 0) {
+            // 创建富文本实现换行
+            NSMutableAttributedString *attributedText = [[NSMutableAttributedString alloc] init];
+            
+            // 时间文本
+            NSMutableAttributedString *timeString = [[NSMutableAttributedString alloc] 
+                initWithString:[NSString stringWithFormat:@"%@\n", originalText]
+                    attributes:@{
+                        NSFontAttributeName: label.font,
+                        NSForegroundColorAttributeName: label.textColor
+                    }];
+            
+            // IP属地文本
+            NSMutableAttributedString *locationString = [[NSMutableAttributedString alloc] 
+                initWithString:[NSString stringWithFormat:@"IP属地：%@", [components componentsJoinedByString:@" "]]
+                    attributes:@{
+                        NSFontAttributeName: [UIFont systemFontOfSize:label.font.pointSize - 2],
+                        NSForegroundColorAttributeName: [label.textColor colorWithAlphaComponent:0.7]
+                    }];
+            
+            [attributedText appendAttributedString:timeString];
+            [attributedText appendAttributedString:locationString];
+            
+            // 设置标签属性
+            label.numberOfLines = 0;
+            label.lineBreakMode = NSLineBreakByWordWrapping;
+            [label setAttributedText:attributedText];
+            
+            // 调整布局
+            CGRect newFrame = label.frame;
+            newFrame.size.height = [attributedText boundingRectWithSize:CGSizeMake(label.frame.size.width, CGFLOAT_MAX)
+                options:NSStringDrawingUsesLineFragmentOrigin
+                context:nil].size.height;
+            label.frame = newFrame;
         }
-
-        // 设置 IP 属地文本
-        NSString *locationString = [self generateLocationString]; // 生成位置信息
-        self.ipLocationLabel.text = [NSString stringWithFormat:@"IP属地：%@", locationString];
-
-        // 调整布局：将 IP 属地标签放在时间标签下方
-        CGRect timeFrame = label.frame;
-        self.ipLocationLabel.frame = CGRectMake(timeFrame.origin.x, 
-                                              timeFrame.origin.y + timeFrame.size.height + 2, // 下移 2pt
-                                              timeFrame.size.width, 
-                                              12); // 适当高度
     }
-
+    
+    // 颜色设置
+    NSString *labelColor = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYLabelColor"];
+    if (labelColor.length > 0) {
+        label.textColor = [DYYYManager colorWithHexString:labelColor];
+    }
+    
     return label;
 }
 
 + (BOOL)shouldActiveWithData:(id)arg1 context:(id)arg2 {
-	return [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableArea"];
+    return [[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableArea"];
 }
-
 %end
 
 %hook AWEModernLongPressPanelTableViewController
