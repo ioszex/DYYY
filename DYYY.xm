@@ -1677,6 +1677,7 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
 
         if (components.count > 0) {
             NSString *locationString = [components componentsJoinedByString:@" "];
+\n
             NSString *cleanedText = [text stringByReplacingOccurrencesOfString:@"IP属地：.*"
                                                                     withString:@""
                                                                        options:NSRegularExpressionSearch
@@ -1689,7 +1690,7 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
                                                                                range:NSMakeRange(0, locationString.length)];
             }
 
-            label.text = [NSString stringWithFormat:@"% \n @ IP属地：%@",
+            label.text = [NSString stringWithFormat:@"% @ IP属地：%@",
                           [cleanedText stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]],
                           locationString];
         }
