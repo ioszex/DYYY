@@ -1656,7 +1656,7 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
             
             // 时间文本
             NSMutableAttributedString *timeString = [[NSMutableAttributedString alloc] 
-                initWithString:[NSString stringWithFormat:@"发布时间：@"%@\n", originalText]
+                initWithString:[NSString stringWithFormat:@"发布时间：%@\n", originalText]
                     attributes:@{
                         NSFontAttributeName: label.font,
                         NSForegroundColorAttributeName: label.textColor
