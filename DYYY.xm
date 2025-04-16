@@ -1676,7 +1676,7 @@ static void DYYYAddCustomViewToParent(UIView *parentView, float transparency) {
         }
 
         if (components.count > 0) {
-            NSString *locationString = [components componentsJoinedByString:@" "\n];
+            NSString *locationString = [components componentsJoinedByString:@" "];
             NSString *cleanedText = [text stringByReplacingOccurrencesOfString:@"IP属地：.*"
                                                                     withString:@""
                                                                        options:NSRegularExpressionSearch
