@@ -105,13 +105,15 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
 
 - (void)showAgreementAlert {
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:@"用户协议"
-                                                                             message:@"本插件为开源项目\n仅供学习交流用途\n如有侵权请联系, GitHub 仓库：Wtrwx/DYYY\n请遵守当地法律法规, 逆向工程仅为学习目的\n盗用源码进行商业用途/发布但未标记开源项目必究\n详情请参阅项目内 MIT 许可证\n\n请输入\"我已阅读并同意继续使用\"以继续使用"
-                                                                      preferredStyle:UIAlertControllerStyleAlert];
+                                                                           message:@"本插件为开源项目\n仅供学习交流用途\n如有侵权请联系, GitHub 仓库：Wtrwx/DYYY\n请遵守当地法律法规, 逆向工程仅为学习目的\n盗用源码进行商业用途/发布但未标记开源项目必究\n详情请参阅项目内 MIT 许可证\n\n请输入\"我已阅读并同意继续使用\"以继续使用"
+                                                                    preferredStyle:UIAlertControllerStyleAlert];
     
     [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
         textField.clearButtonMode = UITextFieldViewModeWhileEditing;
     }];
     
+    // 提前声明所有 action 变量
+    __weak typeof(self) weakSelf = self;
     UIAlertAction *confirmAction = [UIAlertAction actionWithTitle:@"确认" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
         UITextField *textField = alertController.textFields.firstObject;
         NSString *inputText = textField.text;
@@ -124,19 +126,18 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
                                                                                message:@"请正确输入"
                                                                         preferredStyle:UIAlertControllerStyleAlert];
             
-              
-UIAlertAction *exitAction = [UIAlertAction actionWithTitle:@"退出" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-        exit(0);
-    }];
+            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [weakSelf showAgreementAlert];
+            }];
             
             [errorAlert addAction:okAction];
-            [self presentViewController:errorAlert animated:YES completion:nil];
+            [weakSelf presentViewController:errorAlert animated:YES completion:nil];
         }
     }];
 
-    UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [self showAgreementAlert];
-            }];
+    UIAlertAction *exitAction = [UIAlertAction actionWithTitle:@"退出" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+        exit(0);
+    }];
     
     [alertController addAction:confirmAction];
     [alertController addAction:exitAction];
