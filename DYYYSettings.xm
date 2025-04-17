@@ -2091,7 +2091,7 @@ static void showUserAgreementAlert() {
 		    showXItem.title = @"倍速按钮显示后缀";
 		    showXItem.detail = @"";
 		    showXItem.type = 1000;
-		    showXItem.svgIconImageName = @"ic_text_outlined_20";
+		    showXItem.svgIconImageName = @"ic_xmarkcircle_filled_20";
 		    showXItem.cellType = 6;
 		    showXItem.colorStyle = 0;
 		    showXItem.isEnable = YES;
