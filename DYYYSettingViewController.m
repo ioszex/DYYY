@@ -124,18 +124,18 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
                                                                                message:@"请正确输入"
                                                                         preferredStyle:UIAlertControllerStyleAlert];
             
-            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-                [self showAgreementAlert];
-            }];
+             UIAlertAction *exitAction = [UIAlertAction actionWithTitle:@"退出" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+        exit(0);
+    }];
             
             [errorAlert addAction:okAction];
             [self presentViewController:errorAlert animated:YES completion:nil];
         }
     }];
 
-    UIAlertAction *exitAction = [UIAlertAction actionWithTitle:@"退出" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-        exit(0);
-    }];
+    UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+                [self showAgreementAlert];
+            }];
     
     [alertController addAction:confirmAction];
     [alertController addAction:exitAction];
