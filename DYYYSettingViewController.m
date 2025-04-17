@@ -112,9 +112,19 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
         textField.clearButtonMode = UITextFieldViewModeWhileEditing;
     }];
     
-    // 提前声明所有 action 变量
     __weak typeof(self) weakSelf = self;
-    UIAlertAction *confirmAction = [UIAlertAction actionWithTitle:@"确认" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+    
+    // 退出按钮（左）
+    UIAlertAction *exitAction = [UIAlertAction actionWithTitle:@"退出" 
+                                                       style:UIAlertActionStyleDestructive 
+                                                     handler:^(UIAlertAction * _Nonnull action) {
+        exit(0);
+    }];
+    
+    // 确认按钮（右）
+    UIAlertAction *confirmAction = [UIAlertAction actionWithTitle:@"确认" 
+                                                          style:UIAlertActionStyleDefault 
+                                                        handler:^(UIAlertAction * _Nonnull action) {
         UITextField *textField = alertController.textFields.firstObject;
         NSString *inputText = textField.text;
         
@@ -126,7 +136,9 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
                                                                                message:@"请正确输入"
                                                                         preferredStyle:UIAlertControllerStyleAlert];
             
-            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"确定" style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+            UIAlertAction *okAction = [UIAlertAction actionWithTitle:@"确定" 
+                                                             style:UIAlertActionStyleDefault 
+                                                           handler:^(UIAlertAction * _Nonnull action) {
                 [weakSelf showAgreementAlert];
             }];
             
@@ -134,13 +146,10 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
             [weakSelf presentViewController:errorAlert animated:YES completion:nil];
         }
     }];
-
-    UIAlertAction *exitAction = [UIAlertAction actionWithTitle:@"退出" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
-        exit(0);
-    }];
     
-    [alertController addAction:confirmAction];
-    [alertController addAction:exitAction];
+    // 调整按钮顺序：先添加的按钮显示在左边
+    [alertController addAction:exitAction];   // 左边按钮
+    [alertController addAction:confirmAction]; // 右边按钮
     
     [self presentViewController:alertController animated:YES completion:nil];
 }
