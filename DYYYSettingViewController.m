@@ -124,7 +124,8 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
                                                                                message:@"请正确输入"
                                                                         preferredStyle:UIAlertControllerStyleAlert];
             
-             UIAlertAction *exitAction = [UIAlertAction actionWithTitle:@"退出" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
+              
+UIAlertAction *exitAction = [UIAlertAction actionWithTitle:@"退出" style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
         exit(0);
     }];
             
