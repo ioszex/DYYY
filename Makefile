@@ -24,8 +24,10 @@ INSTALL_TARGET_PROCESSES = Aweme
 
 include $(THEOS)/makefiles/common.mk
 
+# 核心修改：TWEAK_NAME 变量
 TWEAK_NAME = DyHookbyX
 
+# 同步修改所有以 DYYY_ 开头的变量前缀为 DyHookbyX_
 DyHookbyX_LIBRARY_SEARCH_PATHS = $(THEOS_PROJECT_DIR)/libs
 DyHookbyX_HEADER_SEARCH_PATHS = $(THEOS_PROJECT_DIR)/libs/include
 
@@ -33,6 +35,7 @@ DyHookbyX_FILES = DYYY.xm DYYYHide.xm DYYYFloatClearButton.xm DYYYFloatSpeedButt
 DyHookbyX_CFLAGS = -fobjc-arc -w -I$(DyHookbyX_HEADER_SEARCH_PATHS)
 DyHookbyX_LDFLAGS = -L$(DyHookbyX_LIBRARY_SEARCH_PATHS) -lwebp
 DyHookbyX_FRAMEWORKS = CoreAudio
+
 CXXFLAGS += -std=c++11
 CCFLAGS += -std=c++11
 DyHookbyX_LOGOS_DEFAULT_GENERATOR = internal
