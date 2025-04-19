@@ -26,16 +26,16 @@ include $(THEOS)/makefiles/common.mk
 
 TWEAK_NAME = DyHookbyX
 
-DYYY_LIBRARY_SEARCH_PATHS = $(THEOS_PROJECT_DIR)/libs
-DYYY_HEADER_SEARCH_PATHS = $(THEOS_PROJECT_DIR)/libs/include
+DyHookbyX_LIBRARY_SEARCH_PATHS = $(THEOS_PROJECT_DIR)/libs
+DyHookbyX_HEADER_SEARCH_PATHS = $(THEOS_PROJECT_DIR)/libs/include
 
-DYYY_FILES = DYYY.xm DYYYHide.xm DYYYFloatClearButton.xm DYYYFloatSpeedButton.xm DYYYSettings.xm DYYYABTestHook.xm DYYYSettingViewController.m DYYYBottomAlertView.m DYYYCustomInputView.m DYYYOptionsSelectionView.m DYYYIconOptionsDialogView.m DYYYAboutDialogView.m DYYYManager.m CityManager.m
-DYYY_CFLAGS = -fobjc-arc -w -I$(DYYY_HEADER_SEARCH_PATHS)
-DYYY_LDFLAGS = -L$(DYYY_LIBRARY_SEARCH_PATHS) -lwebp
-DYYY_FRAMEWORKS = CoreAudio
+DyHookbyX_FILES = DYYY.xm DYYYHide.xm DYYYFloatClearButton.xm DYYYFloatSpeedButton.xm DYYYSettings.xm DYYYABTestHook.xm DYYYSettingViewController.m DYYYBottomAlertView.m DYYYCustomInputView.m DYYYOptionsSelectionView.m DYYYIconOptionsDialogView.m DYYYAboutDialogView.m DYYYManager.m CityManager.m
+DyHookbyX_CFLAGS = -fobjc-arc -w -I$(DyHookbyX_HEADER_SEARCH_PATHS)
+DyHookbyX_LDFLAGS = -L$(DyHookbyX_LIBRARY_SEARCH_PATHS) -lwebp
+DyHookbyX_FRAMEWORKS = CoreAudio
 CXXFLAGS += -std=c++11
 CCFLAGS += -std=c++11
-DYYY_LOGOS_DEFAULT_GENERATOR = internal
+DyHookbyX_LOGOS_DEFAULT_GENERATOR = internal
 
 export THEOS_STRICT_LOGOS=0
 export ERROR_ON_WARNINGS=0
