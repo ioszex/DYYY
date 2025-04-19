@@ -1390,6 +1390,42 @@
 
 %end
 
+//小丑功能
+%hook AWEProfileSocialStatisticView
+
+- (void)layoutSubviews {
+	%orig;
+
+	NSString *indexTitle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYhz"];
+	NSString *friendsTitle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYhg"];
+	NSString *selfTitle = [[NSUserDefaults standardUserDefaults] objectForKey:@"DYYYfs"];
+
+	for (UIView *subview in [self subviews]) {
+		if ([subview isKindOfClass:[UILabel class]]) {
+			UILabel *label = (UILabel *)subview;
+			if ([label.text isEqualToString:@"6.0万"]) {
+				if (indexTitle.length > 0) {
+					[label setText:indexTitle];
+					[self setNeedsLayout];
+				}
+			}
+			if ([label.text isEqualToString:@"1"]) {
+				if (friendsTitle.length > 0) {
+					[label setText:friendsTitle];
+					[self setNeedsLayout];
+				}
+			}
+			if ([label.text isEqualToString:@"183"]) {
+				if (selfTitle.length > 0) {
+					[label setText:selfTitle];
+					[self setNeedsLayout];
+				}
+			}
+		}
+	}
+}
+%end
+
 %ctor {
 	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYUserAgreementAccepted"]) {
 		%init;
