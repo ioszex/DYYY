@@ -490,7 +490,7 @@ typedef NS_ENUM(NSInteger, DYYYSettingItemType) {
 
 - (void)setupFooterLabel {
     self.footerLabel = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 50)];
-    self.footerLabel.text = @"Developer By @huamidev\nVersion: 2.2.4";
+    self.footerLabel.text = @"Developer By X\nVersion: 2.3.0";
     self.footerLabel.textAlignment = NSTextAlignmentCenter;
     self.footerLabel.font = [UIFont systemFontOfSize:14];
     self.footerLabel.textColor = [UIColor secondaryLabelColor];
