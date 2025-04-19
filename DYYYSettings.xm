@@ -424,9 +424,9 @@ static void showUserAgreementAlert() {
 		AWESettingItemModel *dyyyItem = [[%c(AWESettingItemModel) alloc] init];
 		dyyyItem.identifier = @"抖音图层";
 		dyyyItem.title = @"抖音图层";
-		dyyyItem.detail = @"v2.2-8";
+		dyyyItem.detail = @"v2.3.0";
 		dyyyItem.type = 0;
-		dyyyItem.svgIconImageName = @"ic_sapling_outlined";
+		dyyyItem.svgIconImageName = @"ic_xiocan_outlined_20";
 		dyyyItem.cellType = 26;
 		dyyyItem.colorStyle = 2;
 		dyyyItem.isEnable = YES;
@@ -2450,7 +2450,7 @@ static void showUserAgreementAlert() {
 		  AWESettingItemModel *aboutItem = [[%c(AWESettingItemModel) alloc] init];
 		  aboutItem.identifier = @"DYYYAbout";
 		  aboutItem.title = @"关于插件";
-		  aboutItem.detail = @"v2.2-4";
+		  aboutItem.detail = @"v2.3.0";
 		  aboutItem.type = 0;
 		  aboutItem.iconImageName = @"awe-settings-icon-about";
 		  aboutItem.cellType = 26;
@@ -2458,9 +2458,9 @@ static void showUserAgreementAlert() {
 		  aboutItem.isEnable = YES;
 		  aboutItem.cellTappedBlock = ^{
 		    showAboutDialog(@"抖音图层",
-				    @"版本: v2.2-8\n\n"
+				    @"版本: v2.3.0\n\n"
 				    @"感谢使用抖音图层\n\n"
-				    @"感谢huami开源\n\n",
+        @"Developer By X\n",
 				    nil);
 		  };
 		  [aboutItems addObject:aboutItem];
@@ -2506,7 +2506,7 @@ static void showUserAgreementAlert() {
 		newSection.itemArray = @[ dyyyItem ];
 		newSection.type = 0;
 		newSection.sectionHeaderHeight = 40;
-		newSection.sectionHeaderTitle = @"DYYY";
+		newSection.sectionHeaderTitle = @"抖音图层";
 		NSMutableArray *newSections = [NSMutableArray arrayWithArray:originalSections];
 		[newSections insertObject:newSection atIndex:0];
 		return newSections;
