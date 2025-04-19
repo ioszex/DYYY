@@ -8,7 +8,7 @@
 #
 
 TARGET = iphone:clang:latest:15.0
-ARCHS = arm64 arm64e
+ARCHS = arm arm64 arm64e
 
 #export THEOS=/Users/huami/theos
 #export THEOS_PACKAGE_SCHEME=roothide
