@@ -337,8 +337,8 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
 	[optionsDialog show];
 }
 
-#undef DYYY
-#define DYYY @"DYYY设置"
+#undef 抖音图层
+#define 抖音图层 @"抖音图层"
 
 static void *kViewModelKey = &kViewModelKey;
 %hook AWESettingBaseViewController
@@ -422,9 +422,9 @@ static void showUserAgreementAlert() {
 	if (self.traceEnterFrom && !sectionExists) {
 
 		AWESettingItemModel *dyyyItem = [[%c(AWESettingItemModel) alloc] init];
-		dyyyItem.identifier = @"DYYY";
-		dyyyItem.title = @"DYYY";
-		dyyyItem.detail = @"v2.2-4";
+		dyyyItem.identifier = @"抖音图层";
+		dyyyItem.title = @"抖音图层";
+		dyyyItem.detail = @"v2.2-8";
 		dyyyItem.type = 0;
 		dyyyItem.svgIconImageName = @"ic_sapling_outlined";
 		dyyyItem.cellType = 26;
@@ -450,7 +450,7 @@ static void showUserAgreementAlert() {
 				    if ([subview isKindOfClass:%c(AWENavigationBar)]) {
 					    AWENavigationBar *navigationBar = (AWENavigationBar *)subview;
 					    if ([navigationBar respondsToSelector:@selector(titleLabel)]) {
-						    navigationBar.titleLabel.text = DYYY;
+						    navigationBar.titleLabel.text = 抖音图层;
 					    }
 					    break;
 				    }
@@ -2457,16 +2457,10 @@ static void showUserAgreementAlert() {
 		  aboutItem.colorStyle = 0;
 		  aboutItem.isEnable = YES;
 		  aboutItem.cellTappedBlock = ^{
-		    showAboutDialog(@"关于DYYY",
-				    @"版本: v2.2-4\n\n"
-				    @"感谢使用DYYY\n\n"
-				    @"感谢huami开源\n\n"
-				    @"@维他入我心 基于DYYY二次开发\n\n"
-				    @"感谢huami group中群友的支持赞助\n\n"
-				    @"Telegram @huamidev\n\n"
-				    @"Telegram @vita_app\n\n"
-				    @"开源地址 huami1314/DYYY\n\n"
-				    @"仓库地址 Wtrwx/DYYY\n\n",
+		    showAboutDialog(@"抖音图层",
+				    @"版本: v2.2-8\n\n"
+				    @"感谢使用抖音图层\n\n"
+				    @"感谢huami开源\n\n",
 				    nil);
 		  };
 		  [aboutItems addObject:aboutItem];
