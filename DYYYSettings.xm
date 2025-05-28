@@ -909,26 +909,29 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_enterpriseservice_outlined"},
 
-   @{@"identifier" : @"DYYYCustomFollowers",
+      @{@"identifier" : @"DYYYCustomFollowers",
 		    @"title" : @"设置粉丝量",
 		    @"detail" : @"输入粉丝量",
 		    @"cellType" : @26,
-		    @"imageName" : @"ic_module_outlined_20"},
- @{@"identifier" : @"DYYYCustomLikes",
+		    @"imageName" : @"ic_personcircleclean_outlined"},
+
+     @{@"identifier" : @"DYYYCustomLikes",
 		    @"title" : @"设置获赞数量",
 		    @"detail" : @"输入获赞数量",
 		    @"cellType" : @26,
-		    @"imageName" : @"ic_module_outlined_20"},
+		    @"imageName" : @"ic_thumbsup_filled"},
+
 		  @{@"identifier" : @"DYYYCustomFollowing",
 		    @"title" : @"设置关注数量",
 		    @"detail" : @"输入关注数量",
 		    @"cellType" : @26,
-		    @"imageName" : @"ic_eye_outlined_20"},
+		    @"imageName" : @"ic_user_outlined_20"},
+
 		  @{@"identifier" : @"DYYYCustomMutual",
 		    @"title" : @"设置互关数量",
 		    @"detail" : @"输入互关数量",
 		    @"cellType" : @26,
-		    @"imageName" : @"ic_user_outlined_20"},
+		    @"imageName" : @"ic_invertarrow_outlined_20"},
 	  ];
 for (NSDictionary *dict in clownSettings) {
 		  AWESettingItemModel *item = [DYYYSettingsHelper createSettingItem:dict cellTapHandlers:cellTapHandlers];
