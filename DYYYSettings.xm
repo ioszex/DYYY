@@ -910,7 +910,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"imageName" : @"ic_enterpriseservice_outlined"},
 
       @{@"identifier" : @"DYYYCustomFollowers",
-		    @"title" : @"设置粉丝量",
+		    @"title" : @"设置粉丝数量",
 		    @"detail" : @"输入粉丝量",
 		    @"cellType" : @26,
 		    @"imageName" : @"ic_personcircleclean_outlined"},
