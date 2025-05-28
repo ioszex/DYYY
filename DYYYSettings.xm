@@ -902,6 +902,12 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  // 【透明度设置】分类
 	  NSMutableArray<AWESettingItemModel *> *transparencyItems = [NSMutableArray array];
 	  NSArray *transparencySettings = @[
+   @{@"identifier" : @"DYYYEnableSocialStatsCustom",
+		    @"title" : @"设置粉丝量",
+		    @"detail" : @"输入粉丝量",
+		    @"cellType" : @26,
+		    @"imageName" : @"ic_module_outlined_20"},
+
 		  @{@"identifier" : @"DYYYtopbartransparent",
 		    @"title" : @"设置顶栏透明",
 		    @"detail" : @"0-1小数",
@@ -2299,12 +2305,6 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_enterpriseservice_outlined"},
-
-        @{@"identifier" : @"DYYYEnableSocialStatsCustom",
-		    @"title" : @"设置粉丝量",
-		    @"detail" : @"输入粉丝量",
-		    @"cellType" : @26,
-		    @"imageName" : @"ic_module_outlined_20"},
 
        @{@"identifier" : @"DYYYEnableAssetStatsCustom",
 		    @"title" : @"启用长按余额自定义资产",
