@@ -900,9 +900,10 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  NSMutableDictionary *cellTapHandlers = [NSMutableDictionary dictionary];
 
 // 【小丑设置】分类
-	  NSMutableArray<AWESettingItemModel *> * clownItems = [NSMutableArray array];
+	  NSMutableArray<AWESettingItemModel *> *clownItems = [NSMutableArray array];
 	  NSArray *clownSettings = @[
-        @{@"identifier" : @"DYYYEnableSocialStatsCustom",
+
+		 @{@"identifier" : @"DYYYEnableSocialStatsCustom",
 		    @"title" : @"启用自定义功能",
 		    @"detail" : @"",
 		    @"cellType" : @6,
@@ -928,10 +929,9 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"detail" : @"输入互关数量",
 		    @"cellType" : @26,
 		    @"imageName" : @"ic_user_outlined_20"},
-];
-
-	  for (NSDictionary *dict in clownSettings) {
-		  AWESettingItemModel *item = [DYYYSettingsHelper SettingItem:dict cellTapHandlers:cellTapHandlers];
+	  ];
+for (NSDictionary *dict in clownSettings) {
+		  AWESettingItemModel *item = [DYYYSettingsHelper createSettingItem:dict cellTapHandlers:cellTapHandlers];
 		  [clownItems addObject:item];
 	  }
 
