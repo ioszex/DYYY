@@ -904,7 +904,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  NSArray *clownSettings = @[
 
 		 @{@"identifier" : @"DYYYEnableSocialStatsCustom",
-		    @"title" : @"启用自定义功能",
+		    @"title" : @"启用小丑功能",
 		    @"detail" : @"",
 		    @"cellType" : @6,
 		    @"imageName" : @"ic_enterpriseservice_outlined"},
