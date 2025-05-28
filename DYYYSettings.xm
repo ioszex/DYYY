@@ -899,9 +899,9 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  // 创建界面设置二级界面的设置项
 	  NSMutableDictionary *cellTapHandlers = [NSMutableDictionary dictionary];
 
-	  // 【透明度设置】分类
-	  NSMutableArray<AWESettingItemModel *> *transparencyItems = [NSMutableArray array];
-	  NSArray *transparencySettings = @[
+// 【小丑设置】分类
+	  NSMutableArray<AWESettingItemModel *> * clownItems = [NSMutableArray array];
+	  NSArray *clownSettings = @[
         @{@"identifier" : @"DYYYEnableSocialStatsCustom",
 		    @"title" : @"启用自定义功能",
 		    @"detail" : @"",
@@ -913,6 +913,31 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		    @"detail" : @"输入粉丝量",
 		    @"cellType" : @26,
 		    @"imageName" : @"ic_module_outlined_20"},
+ @{@"identifier" : @"DYYYCustomLikes",
+		    @"title" : @"设置获赞数量",
+		    @"detail" : @"输入获赞数量",
+		    @"cellType" : @26,
+		    @"imageName" : @"ic_module_outlined_20"},
+		  @{@"identifier" : @"DYYYCustomFollowing",
+		    @"title" : @"设置关注数量",
+		    @"detail" : @"输入关注数量",
+		    @"cellType" : @26,
+		    @"imageName" : @"ic_eye_outlined_20"},
+		  @{@"identifier" : @"DYYYCustomMutual",
+		    @"title" : @"设置互关数量",
+		    @"detail" : @"输入互关数量",
+		    @"cellType" : @26,
+		    @"imageName" : @"ic_user_outlined_20"},
+];
+
+	  for (NSDictionary *dict in clownSettings) {
+		  AWESettingItemModel *item = [DYYYSettingsHelper SettingItem:dict cellTapHandlers:cellTapHandlers];
+		  [clownItems addObject:item];
+	  }
+
+	  // 【透明度设置】分类
+	  NSMutableArray<AWESettingItemModel *> *transparencyItems = [NSMutableArray array];
+	  NSArray *transparencySettings = @[
 
 		  @{@"identifier" : @"DYYYtopbartransparent",
 		    @"title" : @"设置顶栏透明",
@@ -1039,6 +1064,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 
 	  // 将图标自定义section添加到sections数组
 	  NSMutableArray *sections = [NSMutableArray array];
+    [sections addObject:createSection(@"小丑设置", clownItems)];
 	  [sections addObject:createSection(@"透明度设置", transparencyItems)];
 	  [sections addObject:createSection(@"缩放与大小", scaleItems)];
 	  [sections addObject:createSection(@"标题自定义", titleItems)];
