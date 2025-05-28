@@ -902,7 +902,13 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  // 【透明度设置】分类
 	  NSMutableArray<AWESettingItemModel *> *transparencyItems = [NSMutableArray array];
 	  NSArray *transparencySettings = @[
-   @{@"identifier" : @"DYYYEnableSocialStatsCustom",
+        @{@"identifier" : @"DYYYEnableSocialStatsCustom",
+		    @"title" : @"启用自定义功能",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_enterpriseservice_outlined"},
+
+   @{@"identifier" : @"DYYYCustomFollowers",
 		    @"title" : @"设置粉丝量",
 		    @"detail" : @"输入粉丝量",
 		    @"cellType" : @26,
