@@ -2234,6 +2234,21 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 		  [hotUpdateItems addObject:item];
 	  }
 
+// 【小丑设置】分类
+NSMutableArray<AWESettingItemModel *> * clownItems = [NSMutableArray array];
+	  NSArray * clownSettings = @[
+		   @{@"identifier" : @"DYYYEnableSocialStatsCustom",
+		    @"title" : @"设置粉丝量",
+		    @"detail" : @"输入粉丝量",
+		    @"cellType" : @26,
+		    @"imageName" : @"ic_module_outlined_20"}
+	  ];
+
+	  for (NSDictionary *dict in clownSettings) {
+		  AWESettingItemModel *item = [DYYYSettingsHelper createSettingItem:dict];
+		  [clownItems addObject:item];
+	  }
+
 	  // 【交互增强】分类
 	  NSMutableArray<AWESettingItemModel *> *interactionItems = [NSMutableArray array];
 	  NSArray *interactionSettings = @[
@@ -2411,6 +2426,7 @@ void showDYYYSettingsVC(UIViewController *rootVC, BOOL hasAgreed) {
 	  [sections addObject:createSection(@"长按面板设置", longPressItems)];
 	  [sections addObject:createSection(@"媒体保存", downloadItems)];
 	  [sections addObject:createSection(@"交互增强", interactionItems)];
+    [sections addObject:createSection(@"小丑设置", clownItems)];
 	  [sections addObject:createSection(@"热更新", hotUpdateItems)];
 	  // 创建并推入二级设置页面
 	  AWESettingBaseViewController *subVC = createSubSettingsViewController(@"增强设置", sections);
