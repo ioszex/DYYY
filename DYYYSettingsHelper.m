@@ -58,6 +58,7 @@
               @"DYYYEnableNotificationTransparency" : @[ @"DYYYNotificationCornerRadius" ],
               @"DYYYEnableFloatSpeedButton" : @[ @"DYYYAutoRestoreSpeed", @"DYYYSpeedButtonShowX", @"DYYYSpeedButtonSize", @"DYYYSpeedSettings" ],
               @"DYYYEnableFloatClearButton" : @[ @"DYYYClearButtonIcon", @"DYYYEnableFloatClearButtonSize", @"DYYYEnabshijianjindu", @"DYYYHideTimeProgress", @"DYYYHideDanmaku", @"DYYYHideSlider", @"DYYYHideTabBar", @"DYYYHideSpeed" ],
+              @"DYYYEnableSocialStatsCustom" : @[ @"DYYYCustomFollowers", @"DYYYCustomLikes", @"DYYYCustomFollowing", @"DYYYCustomMutual"],  //小丑设置
           },
 
           // ===== 条件依赖配置 =====
