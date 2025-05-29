@@ -1,21 +1,7 @@
-#import "AwemeHeaders.h"
-#import "DYYYManager.h"
-#import <MobileCoreServices/MobileCoreServices.h>
 #import <UIKit/UIKit.h>
 #import <objc/runtime.h>
-
-#import "DYYYABTestHook.h"
-
-#import "DYYYAboutDialogView.h"
-#import "DYYYBottomAlertView.h"
-#import "DYYYCustomInputView.h"
-#import "DYYYIconOptionsDialogView.h"
-#import "DYYYKeywordListView.h"
-#import "DYYYOptionsSelectionView.h"
-
-#import "DYYYConstants.h"
-#import "DYYYSettingsHelper.h"
-#import "DYYYUtils.h"
+#import "AwemeHeaders.h"
+#import "DYYYManager.h"
 
 // 调试日志
 #define DYYY_LOG(fmt, ...) NSLog((@"[DYYY资产统计] " fmt), ##__VA_ARGS__)
