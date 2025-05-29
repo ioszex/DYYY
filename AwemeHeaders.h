@@ -377,6 +377,7 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @end
 
 @interface DYYYSettingViewController : UIViewController
+@property (nonatomic, strong) NSArray<NSArray<DYYYSettingItem *> *> *settingSections;
 @end
 
 @interface AWEElementStackView : UIView
