@@ -376,8 +376,7 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @property(nonatomic, assign) BOOL isAppearing;
 @end
 
-@interface DYYYSettingViewController : UIViewController
-@property (nonatomic, strong) NSArray<NSArray<DYYYSettingItem *> *> *settingSections;
+@interface DYYYSettingViewController ()
 @end
 
 @interface AWEElementStackView : UIView
