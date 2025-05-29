@@ -21,6 +21,9 @@
 static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSString *saveFilename, void (^onClear)(void), void (^onSelect)(void));
 
 @interface DYYYImagePickerDelegate : NSObject <UIImagePickerControllerDelegate, UINavigationControllerDelegate>
+@property(nonatomic, strong) UISearchBar *searchBar;
+@property(nonatomic, strong) NSMutableArray *filteredSettings;
+@property(nonatomic, assign) BOOL isSearching;
 @property(nonatomic, copy) void (^completionBlock)(NSDictionary *info);
 @end
 
@@ -38,6 +41,9 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
 @end
 
 @interface DYYYBackupPickerDelegate : NSObject <UIDocumentPickerDelegate>
+@property(nonatomic, strong) UISearchBar *searchBar;
+@property(nonatomic, strong) NSMutableArray *filteredSettings;
+@property(nonatomic, assign) BOOL isSearching;
 @property(nonatomic, copy) void (^completionBlock)(NSURL *url);
 @property(nonatomic, copy) NSString *tempFilePath;
 @end
@@ -3121,3 +3127,11 @@ for (NSDictionary *dict in clownSettings) {
 	return originalSections;
 }
 %end
+
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    [self setupSearchBar];
+    self.filteredSettings = [NSMutableArray array];
+    self.isSearching = NO;
+}
