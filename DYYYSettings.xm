@@ -20,20 +20,8 @@
 @class DYYYIconOptionsDialogView;
 static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSString *saveFilename, void (^onClear)(void), void (^onSelect)(void));
 
-@interface <UISearchBarDelegate> DYYYImagePickerDelegate : NSObject <UIImagePickerControllerDelegate, UINavigationControllerDelegate>
+@interface DYYYImagePickerDelegate : NSObject <UIImagePickerControllerDelegate, UINavigationControllerDelegate>
 @property(nonatomic, copy) void (^completionBlock)(NSDictionary *info);
-
-- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
-    // 假设 self.settings 是原始数据数组, self.filteredSettings 是过滤后的数据
-    if (searchText.length == 0) {
-        self.filteredSettings = [self.settings copy];
-    } else {
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS[c] %@", searchText];
-        self.filteredSettings = [self.settings filteredArrayUsingPredicate:predicate];
-    }
-    [self.tableView reloadData]; // 假设使用 tableView 显示数据
-}
-
 @end
 
 @implementation DYYYImagePickerDelegate
@@ -47,35 +35,11 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker {
 	[picker dismissViewControllerAnimated:YES completion:nil];
 }
-
-- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
-    // 假设 self.settings 是原始数据数组, self.filteredSettings 是过滤后的数据
-    if (searchText.length == 0) {
-        self.filteredSettings = [self.settings copy];
-    } else {
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS[c] %@", searchText];
-        self.filteredSettings = [self.settings filteredArrayUsingPredicate:predicate];
-    }
-    [self.tableView reloadData]; // 假设使用 tableView 显示数据
-}
-
 @end
 
-@interface <UISearchBarDelegate> DYYYBackupPickerDelegate : NSObject <UIDocumentPickerDelegate>
+@interface DYYYBackupPickerDelegate : NSObject <UIDocumentPickerDelegate>
 @property(nonatomic, copy) void (^completionBlock)(NSURL *url);
 @property(nonatomic, copy) NSString *tempFilePath;
-
-- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
-    // 假设 self.settings 是原始数据数组, self.filteredSettings 是过滤后的数据
-    if (searchText.length == 0) {
-        self.filteredSettings = [self.settings copy];
-    } else {
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS[c] %@", searchText];
-        self.filteredSettings = [self.settings filteredArrayUsingPredicate:predicate];
-    }
-    [self.tableView reloadData]; // 假设使用 tableView 显示数据
-}
-
 @end
 
 @implementation DYYYBackupPickerDelegate
@@ -101,28 +65,6 @@ static void showIconOptionsDialog(NSString *title, UIImage *previewImage, NSStri
 		}
 	}
 }
-
-- (void)setupSearchBar {
-    self.searchBar = [[UISearchBar alloc] initWithFrame:CGRectMake(0, 0, self.view.bounds.size.width, 44)];
-    self.searchBar.delegate = self;
-    self.searchBar.placeholder = @"搜索设置";
-    self.searchBar.searchBarStyle = UISearchBarStyleMinimal;
-    self.searchBar.backgroundColor = [UIColor clearColor];
-    [self.view addSubview:self.searchBar];
-}
-
-
-- (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText {
-    // 假设 self.settings 是原始数据数组, self.filteredSettings 是过滤后的数据
-    if (searchText.length == 0) {
-        self.filteredSettings = [self.settings copy];
-    } else {
-        NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF CONTAINS[c] %@", searchText];
-        self.filteredSettings = [self.settings filteredArrayUsingPredicate:predicate];
-    }
-    [self.tableView reloadData]; // 假设使用 tableView 显示数据
-}
-
 @end
 
 static AWESettingItemModel *createIconCustomizationItem(NSString *identifier, NSString *title, NSString *svgIconName, NSString *saveFilename) {
