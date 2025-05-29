@@ -376,8 +376,7 @@ typedef NS_ENUM(NSInteger, MediaType) {
 @property(nonatomic, assign) BOOL isAppearing;
 @end
 
-@interface DYYYSettingViewController : UIViewController
-@end
+
 
 @interface AWEElementStackView : UIView
 @property(nonatomic, copy) NSString *accessibilityLabel;
