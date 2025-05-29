@@ -55,9 +55,6 @@ static void findAndUpdateAssetViews(UIView *view, NSString *customValue);
 @end
 
 
-@interface DYYYSettingViewController : UIViewController
-@property (nonatomic, strong) NSArray<NSArray<DYYYSettingItem *> *> *settingSections;
-@end
 
 @interface BDXViewController : UIViewController
 @property(nonatomic, strong) UIView *view;
