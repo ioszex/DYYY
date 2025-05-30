@@ -2943,80 +2943,13 @@ static AWEIMReusableCommonCell *currentCell;
 
 %end
 
-%hook AWEPlayInteractionViewController
+%hook AWEIMFeedVideoQuickReplayInputViewController
+
 - (void)viewDidLayoutSubviews {
 	%orig;
 
-    UIViewController *parentVC = self.parentViewController;
-    while (parentVC) {
-        if ([parentVC isKindOfClass:%c(AFDPlayRemoteFeedTableViewController)]) {
-            return;
-        }
-        parentVC = parentVC.parentViewController;
-    }
-
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYisEnableFullScreen"]) {
-		NSString *currentReferString = self.referString;
-		CGRect frame = self.view.frame;
-
-		// 根据referString来决定是否减去高度差值
-		if ([currentReferString isEqualToString:@"general_search"]) {
-			frame.size.height = self.view.superview.frame.size.height;
-		} else if ([currentReferString isEqualToString:@"chat"] || currentReferString == nil) {
-			frame.size.height = self.view.superview.frame.size.height;
-		} else if ([currentReferString isEqualToString:@"search_result"] || currentReferString == nil) {
-			frame.size.height = self.view.superview.frame.size.height;
-		} else if ([currentReferString isEqualToString:@"close_friends_moment"] || currentReferString == nil) {
-			frame.size.height = self.view.superview.frame.size.height;
-		} else if ([currentReferString isEqualToString:@"offline_mode"] || currentReferString == nil) {
-			frame.size.height = self.view.superview.frame.size.height;
-		} else if ([currentReferString isEqualToString:@"others_homepage"] || currentReferString == nil) {
-			frame.size.height = self.view.superview.frame.size.height - g_heightDifference;
-		} else {
-			frame.size.height = self.view.superview.frame.size.height - g_heightDifference;
-		}
-
-		self.view.frame = frame;
-	}
-}
-
-%end
-
-%hook AWEHPSearchBubbleEntranceView
-- (void)layoutSubviews {
-	%orig;
-
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideSearchBubble"]) {
-		[self removeFromSuperview];
-		return;
-	}
-}
-
-%end
-
-%hook ACCGestureResponsibleStickerView
-- (void)layoutSubviews {
-	%orig;
-
-	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideChallengeStickers"]) {
-		[self removeFromSuperview];
-		return;
-	}
-}
-%end
-
-%hook AWEMusicCoverButton
-
-- (void)layoutSubviews {
-	%orig;
-
-	NSString *accessibilityLabel = self.accessibilityLabel;
-
-	if ([accessibilityLabel isEqualToString:@"音乐详情"]) {
-		if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideMusicButton"]) {
-			[self removeFromSuperview];
-			return;
-		}
+	if ([[NSUserDefaults standardUserDefaults] boolForKey:@"DYYYHideReply"]) {
+		[self.view removeFromSuperview];
 	}
 }
 
