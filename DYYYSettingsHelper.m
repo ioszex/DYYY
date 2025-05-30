@@ -59,6 +59,7 @@
               @"DYYYEnableFloatSpeedButton" : @[ @"DYYYAutoRestoreSpeed", @"DYYYSpeedButtonShowX", @"DYYYSpeedButtonSize", @"DYYYSpeedSettings" ],
               @"DYYYEnableFloatClearButton" : @[ @"DYYYClearButtonIcon", @"DYYYEnableFloatClearButtonSize", @"DYYYEnabshijianjindu", @"DYYYHideTimeProgress", @"DYYYHideDanmaku", @"DYYYHideSlider", @"DYYYHideTabBar", @"DYYYHideSpeed" ],
               @"DYYYEnableSocialStatsCustom" : @[ @"DYYYCustomFollowers", @"DYYYCustomLikes", @"DYYYCustomFollowing", @"DYYYCustomMutual"],  //小丑设置
+              @"DYYYEnableDoubleOpenAlertController" : @[ @"DYYYDoubleTapDownload", @"DYYYDoubleTapDownloadAudio", @"DYYYDoubleInterfaceDownload", @"DYYYDoubleCreateVideo", @"DYYYDoubleTapCopyDesc", @"DYYYDoubleTapComment", @"DYYYDoubleTapLike", @"DYYYDoubleTapshowDislikeOnVideo", @"DYYYDoubleTapshowSharePanel"],  //双击打开菜单设置
           },
 
           // ===== 条件依赖配置 =====
