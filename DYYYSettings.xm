@@ -2449,7 +2449,6 @@ for (NSDictionary *dict in clownSettings) {
 
 	  // 创建并组织所有section
 	  NSMutableArray *sections = [NSMutableArray array];
-    	  [sections addObject:createSection(@"付费解锁设置", vipItems)];
 	  [sections addObject:createSection(@"长按面板设置", longPressItems)];
 	  [sections addObject:createSection(@"媒体保存", downloadItems)];
 	  [sections addObject:createSection(@"交互增强", interactionItems)];
