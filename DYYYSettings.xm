@@ -1986,6 +1986,92 @@ for (NSDictionary *dict in clownSettings) {
 		  [longPressItems addObject:item];
 	  }
 
+ // 【付费解锁设置】分类
+	  NSMutableArray<AWESettingItemModel *> *vipItems = [NSMutableArray array];
+	  NSArray *vipSettings = @[
+		  @{@"identifier" : @"DYYYEnableVipUnlock",
+		    @"title" : @"总开关",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_boxarrowdown_outlined"},
+		  @{@"identifier" : @"DYYYBypassVipVerification",
+		    @"title" : @"测试1",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_boxarrowdown_outlined"},
+		  @{@"identifier" : @"DYYYVipTypeOverride",
+		    @"title" : @"测试2",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_boxarrowdown_outlined"},
+		  @{@"identifier" : @"DYYYVideoPlayableOverride",
+		    @"title" : @"测试3",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_boxarrowdown_outlined"},
+		  @{@"identifier" : @"DYYYVideoVipCheckBypass",
+		    @"title" : @"测试4",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_boxarrowdown_outlined"},
+		  @{@"identifier" : @"DYYYPaidContentBypass",
+		    @"title" : @"测试5",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_videosearch_outlined_20"},
+		  @{@"identifier" : @"DYYYPurchaseStatusOverride",
+		    @"title" : @"测试6",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_rectangleonrectangleup_outlined_20"},
+		  @{@"identifier" : @"DYYYLiveVipFeatures",
+		    @"title" : @"测试7",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_rectangleonrectangleup_outlined_20"},
+		  @{@"identifier" : @"DYYYLiveVipPrivilege",
+		    @"title" : @"测试8",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_cloudarrowdown_outlined_20"},
+		  @{@"identifier" : @"DYYYHideVipPaywall",
+		    @"title" : @"测试9",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_userban_outlined_20"},
+		  @{@"identifier" : @"DYYYHideVipAlerts",
+		    @"title" : @"测试10",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_funnel_outlined_20"},
+		  @{@"identifier" : @"DYYYHideUpgradePrompts",
+		    @"title" : @"测试11",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_c_alarm_outlined"},
+              @{@"identifier" : @"DYYYInterceptVipRequests",
+		    @"title" : @"测试12",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_boxarrowdown_outlined"},
+		  @{@"identifier" : @"DYYYVipFeaturesEnabled",
+		    @"title" : @"测试13",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_boxarrowdown_outlined"},
+		  @{@"identifier" : @"DYYYPremiumContentAccess",
+		    @"title" : @"测试14",
+		    @"detail" : @"",
+		    @"cellType" : @6,
+		    @"imageName" : @"ic_boxarrowdown_outlined"}
+	  ];
+	  for (NSDictionary *dict in vipSettings) {
+		  AWESettingItemModel *item = [DYYYSettingsHelper createSettingItem:dict];
+		  [vipItems addObject:item];
+	  }
+
+
+
 	  // 【媒体保存】分类
 	  NSMutableArray<AWESettingItemModel *> *downloadItems = [NSMutableArray array];
 	  NSArray *downloadSettings = @[
@@ -2449,6 +2535,7 @@ for (NSDictionary *dict in clownSettings) {
 
 	  // 创建并组织所有section
 	  NSMutableArray *sections = [NSMutableArray array];
+    	  [sections addObject:createSection(@"付费解锁设置", vipItems)];
 	  [sections addObject:createSection(@"长按面板设置", longPressItems)];
 	  [sections addObject:createSection(@"媒体保存", downloadItems)];
 	  [sections addObject:createSection(@"交互增强", interactionItems)];
