@@ -1,6 +1,4 @@
 #import "AwemeHeaders.h"
-#import "DYYYManager.h"
-#import "DYYYToast.h"
 
 %hook AWEPlayInteractionViewController
 
