@@ -1,4 +1,5 @@
 #import "CustomMenuView.h"
+#import "DYYYSettingViewController.h"
 #import <objc/runtime.h>
 
 @implementation CustomMenuWindow
